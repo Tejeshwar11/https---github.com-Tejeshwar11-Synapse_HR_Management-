@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { mockFatimaAlJamil } from "@/lib/data";
 
 interface DetailedEmployeeProfileProps {
   employee: Employee;
@@ -26,7 +27,7 @@ export function DetailedEmployeeProfile({ employee }: DetailedEmployeeProfilePro
 
   return (
     <div className="flex min-h-screen w-full">
-      <AppSidebar userRole="hr" employee={employee} />
+      <AppSidebar userRole="hr" employee={mockFatimaAlJamil} />
       <div className="flex flex-col flex-1">
         <header className="sticky top-0 z-30 flex h-auto items-start gap-4 border-b bg-background px-4 py-4 sm:static sm:border-0 sm:bg-transparent sm:px-6">
             <Avatar className="h-20 w-20">
@@ -45,7 +46,7 @@ export function DetailedEmployeeProfile({ employee }: DetailedEmployeeProfilePro
                 <TabsList>
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     <TabsTrigger value="presence">Presence Analytics</TabsTrigger>
-                    <TabsTrigger value="history">Full History</TabsTrigger>
+
                 </TabsList>
                 <TabsContent value="overview" className="mt-4">
                     <div className="grid gap-6 lg:grid-cols-3">
@@ -66,7 +67,7 @@ export function DetailedEmployeeProfile({ employee }: DetailedEmployeeProfilePro
                                      >
                                         <RadialBar background dataKey="value" cornerRadius={50} />
                                         <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="text-3xl font-bold fill-charcoal">
-                                          {employee.flightRisk?.score}%
+                                          {employee.flightRisk?.score || 0}%
                                         </text>
                                          <text x="50%" y="68%" textAnchor="middle" dominantBaseline="middle" className="text-sm fill-slate-gray">
                                           Flight Risk
@@ -84,6 +85,9 @@ export function DetailedEmployeeProfile({ employee }: DetailedEmployeeProfilePro
                                                 <span>{factor.substring(2)}</span>
                                             </li>
                                         ))}
+                                         {!employee.flightRisk && (
+                                            <p className="text-center text-slate-gray">No significant factors identified.</p>
+                                        )}
                                     </ul>
                                 </div>
                             </CardContent>
@@ -113,17 +117,6 @@ export function DetailedEmployeeProfile({ employee }: DetailedEmployeeProfilePro
                         </CardHeader>
                         <CardContent>
                            <Image src={employee.analytics?.presenceHeatmapUrl || '/heatmap-placeholder.png'} alt="Presence Heatmap" width={1200} height={700} className="rounded-lg border" data-ai-hint="office floor plan heatmap" />
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                 <TabsContent value="history" className="mt-4">
-                     <Card className="rounded-xl shadow-md">
-                        <CardHeader>
-                            <CardTitle>Full History</CardTitle>
-                            <CardDescription>Coming Soon: A complete log of attendance, leaves, and performance reviews.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="h-64 flex items-center justify-center text-slate-gray">
-                            <p>Full historical data will be displayed here.</p>
                         </CardContent>
                     </Card>
                 </TabsContent>

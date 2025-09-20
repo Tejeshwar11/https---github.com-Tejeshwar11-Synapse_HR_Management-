@@ -1,8 +1,14 @@
 import { DetailedEmployeeProfile } from "@/components/app/detailed-employee-profile";
-import { mockDavidChen } from "@/lib/data";
+import { mockEmployees } from "@/lib/data";
+import { notFound } from "next/navigation";
 
-export default function DetailedEmployeePage() {
-  // In a real app, you would fetch the employee data based on the ID from the URL.
-  // For this prototype, we'll use the mock data for David Chen.
-  return <DetailedEmployeeProfile employee={mockDavidChen} />;
+export default function DetailedEmployeePage({ params }: { params: { id: string } }) {
+  const employee = mockEmployees.find((e) => e.id === params.id);
+
+  if (!employee) {
+    // In a real app, you'd render a proper not found page.
+    return notFound();
+  }
+
+  return <DetailedEmployeeProfile employee={employee} />;
 }
