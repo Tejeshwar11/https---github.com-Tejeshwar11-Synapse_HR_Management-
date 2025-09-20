@@ -1,6 +1,6 @@
 import { HrDashboard } from "@/components/app/hr-dashboard";
-import { hrDashboardData, mockFatimaAlJamil } from "@/lib/data";
+import { hrDashboardData } from "@/lib/data";
 
 export default function HrPage() {
-  return <HrDashboard user={mockFatimaAlJamil} data={hrDashboardData} />;
+  return <HrDashboard data={hrDashboardData} />;
 }

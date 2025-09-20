@@ -1,18 +1,16 @@
 "use client";
 
-import { BarChart, Users, FileWarning, CheckSquare } from "lucide-react";
-import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, Cell } from 'recharts';
+import { Users, FileWarning, CheckSquare } from "lucide-react";
+import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 
-import type { HrAdmin, Employee } from "@/lib/types";
+import type { Employee } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { AppSidebar } from "./app-sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import Link from "next/link";
 import { Progress } from "../ui/progress";
 
 interface HrDashboardProps {
-  user: HrAdmin;
   data: {
     workforcePulse: {
         totalPresent: number;
@@ -30,15 +28,14 @@ interface HrDashboardProps {
   };
 }
 
-export function HrDashboard({ user, data }: HrDashboardProps) {
+export function HrDashboard({ data }: HrDashboardProps) {
   return (
-    <div className="flex min-h-screen w-full">
-      <AppSidebar userRole="hr" employee={user} />
-      <div className="flex flex-col flex-1">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-          <h1 className="text-2xl">HR Command Center</h1>
-        </header>
-        <main className="flex-1 p-4 sm:px-6 sm:py-0 space-y-6">
+    <div className="flex gap-6">
+        <div className="flex flex-col flex-1 gap-6">
+         <header>
+            <h1 className="text-3xl font-bold">HR Command Center</h1>
+            <p className="text-muted-foreground">A high-level overview of workforce analytics and key metrics.</p>
+         </header>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <Card className="rounded-xl shadow-md">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -103,6 +100,9 @@ export function HrDashboard({ user, data }: HrDashboardProps) {
                             </Button>
                         </div>
                     ))}
+                     {data.flightRiskHotlist.length === 0 && (
+                        <p className="text-sm text-center py-8 text-muted-foreground">No employees are currently identified as high flight risk. Great!</p>
+                    )}
                 </CardContent>
             </Card>
 
@@ -112,7 +112,7 @@ export function HrDashboard({ user, data }: HrDashboardProps) {
                 </CardHeader>
                 <CardContent className="h-[300px]">
                    <ResponsiveContainer width="100%" height="100%">
-                    <RechartsBarChart data={data.departmentCollaboration} layout="vertical" margin={{ top: 5, right: 20, left: 80, bottom: 5 }}>
+                    <RechartsBarChart data={data.departmentCollaboration} layout="vertical" margin={{ top: 5, right: 20, left: 110, bottom: 5 }}>
                         <XAxis type="number" hide />
                         <YAxis dataKey="name" type="category" width={150} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
                         <Tooltip
@@ -132,14 +132,13 @@ export function HrDashboard({ user, data }: HrDashboardProps) {
                 </CardContent>
             </Card>
           </div>
-        </main>
       </div>
-       <Card className="relative w-96 h-[400px] rounded-t-xl shadow-lg flex flex-col m-6 mt-auto">
+       <Card className="w-96 rounded-xl shadow-lg flex-col h-fit sticky top-6">
             <CardHeader>
                 <CardTitle>Synapse Strategic Assistant</CardTitle>
                  <CardDescription>Get instant insights and actionable plans.</CardDescription>
             </CardHeader>
-            <CardContent className="flex-1 flex items-center justify-center text-slate-gray text-sm">
+            <CardContent className="flex-1 flex items-center justify-center text-slate-gray text-sm min-h-[300px]">
                 <p>Chatbot interface coming soon.</p>
             </CardContent>
         </Card>
