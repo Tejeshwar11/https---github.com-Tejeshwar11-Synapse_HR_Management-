@@ -13,7 +13,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-import type { Employee } from "@/lib/types";
+import type { Employee, LeaveRequest } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -27,7 +27,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { AppSidebar } from "./app-sidebar";
 import { LeaveRequestDialog } from "./leave-request-dialog";
-import type { LeaveRequest } from "@/lib/types";
 import { EmployeeChatbot } from "./employee-chatbot";
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
 
@@ -38,8 +37,10 @@ interface EmployeeDashboardProps {
 
 const LiveClock = () => {
   const [time, setTime] = useState(new Date().toLocaleTimeString());
-
+  const [isClient, setIsClient] = useState(false);
+  
   useEffect(() => {
+    setIsClient(true);
     const timer = setInterval(() => {
       setTime(new Date().toLocaleTimeString());
     }, 1000);
@@ -48,13 +49,6 @@ const LiveClock = () => {
       clearInterval(timer);
     };
   }, []);
-
-  // We need to ensure the component is mounted on the client before showing the time
-  const [isClient, setIsClient] = useState(false);
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
 
   return <p className="font-mono text-sm text-slate-gray">{isClient ? time : '--:--:--'}</p>;
 };
@@ -68,6 +62,10 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
         ...newRequest,
         id: `req-${Date.now()}`,
         status: 'Pending' as const,
+        // These fields are just for the local state update. A real backend would handle this.
+        employeeId: employee.id,
+        employeeName: employee.name,
+        employeeAvatar: employee.avatarUrl,
     };
     setEmployee(currentEmployee => ({
         ...currentEmployee,
