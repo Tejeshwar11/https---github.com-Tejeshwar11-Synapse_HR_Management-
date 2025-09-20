@@ -1,17 +1,22 @@
+
 "use client"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User } from "lucide-react";
+import { useWifi } from "@/lib/hooks/use-wifi";
+import { User, Wifi, WifiOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function EmployeeLoginPage() {
     const router = useRouter();
+    const { isConnected } = useWifi();
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
+        if (!isConnected) return;
         // In a real app, you would have authentication logic here
         router.push('/employee');
     }
@@ -27,6 +32,15 @@ export default function EmployeeLoginPage() {
           <CardDescription>Enter your credentials to access your dashboard.</CardDescription>
         </CardHeader>
         <CardContent>
+          {!isConnected && (
+              <Alert variant="destructive" className="mb-4">
+                <WifiOff className="h-4 w-4" />
+                <AlertTitle>Wi-Fi Not Detected</AlertTitle>
+                <AlertDescription>
+                  You must be connected to the office Wi-Fi to log in.
+                </AlertDescription>
+              </Alert>
+            )}
           <form className="space-y-4" onSubmit={handleLogin}>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -36,8 +50,8 @@ export default function EmployeeLoginPage() {
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" required />
             </div>
-            <Button type="submit" className="w-full">
-              Login
+            <Button type="submit" className="w-full" disabled={!isConnected}>
+              { isConnected ? 'Login' : 'Login Disabled' }
             </Button>
           </form>
            <div className="mt-4 text-center text-sm">

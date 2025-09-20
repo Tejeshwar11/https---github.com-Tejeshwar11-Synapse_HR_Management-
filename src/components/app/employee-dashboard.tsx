@@ -1,9 +1,12 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
 import {
   Flame,
   MessageCircle,
+  TrendingDown,
+  WifiOff,
 } from "lucide-react";
 import {
   Pie,
@@ -16,7 +19,7 @@ import { format, parseISO } from 'date-fns';
 
 import type { Employee, LeaveRequest } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -30,6 +33,10 @@ import { AppSidebar } from "./app-sidebar";
 import { LeaveRequestDialog } from "./leave-request-dialog";
 import { EmployeeChatbot } from "./employee-chatbot";
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
+import { useWifi } from "@/lib/hooks/use-wifi";
+import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertTitle } from "../ui/alert";
+
 
 const LiveClock = () => {
   const [time, setTime] = useState("");
@@ -61,6 +68,28 @@ interface EmployeeDashboardProps {
 
 export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboardProps) {
   const [employee, setEmployee] = useState(initialEmployee);
+  const { isConnected, disconnectCount, simulateDisconnect } = useWifi();
+  const { toast } = useToast();
+  const [isPunchedIn, setIsPunchedIn] = useState(false);
+
+  useEffect(() => {
+    if (disconnectCount > 2) {
+      toast({
+        variant: "destructive",
+        title: "Half-Day Marked",
+        description: "You have been marked for a half-day due to frequent Wi-Fi disconnections.",
+      });
+      setEmployee(e => ({...e, halfDays: (e.halfDays || 0) + 1, stats: { ...e.stats, leaveBalance: { ...e.stats.leaveBalance, used: e.stats.leaveBalance.used + 0.5}}}));
+    }
+  }, [disconnectCount, toast]);
+
+  const handlePunch = () => {
+    setIsPunchedIn(!isPunchedIn);
+    toast({
+      title: isPunchedIn ? "Punched Out" : "Punched In",
+      description: `Your attendance has been recorded at ${new Date().toLocaleTimeString()}`,
+    })
+  }
 
   const handleNewRequest = (newRequest: Omit<LeaveRequest, "id" | "status" | "employeeId" | "employeeName" | "employeeAvatar">) => {
     const fullRequest = {
@@ -71,15 +100,22 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
         employeeName: employee.name,
         employeeAvatar: employee.avatarUrl,
     };
+    
+    // Simple logic: assume 1 day per request for leave balance update
+    const isLeave = newRequest.type === 'leave';
+    const startDate = parseISO(newRequest.startDate);
+    const endDate = parseISO(newRequest.endDate);
+    const daysRequested = Math.max(1, (endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24) + 1);
+
+
     setEmployee(currentEmployee => ({
         ...currentEmployee,
         requests: [fullRequest, ...currentEmployee.requests],
         stats: {
           ...currentEmployee.stats,
-          // Assuming a full day leave for simplicity
           leaveBalance: {
             ...currentEmployee.stats.leaveBalance,
-            used: currentEmployee.stats.leaveBalance.used + 1
+            used: isLeave ? currentEmployee.stats.leaveBalance.used + daysRequested : currentEmployee.stats.leaveBalance.used
           }
         }
     }));
@@ -111,20 +147,30 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
             <Card className="rounded-xl shadow-md">
                 <CardContent className="p-6 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <div className="w-2.5 h-2.5 rounded-full bg-success" />
+                        <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-success' : 'bg-destructive animate-pulse'}`} />
                         <div>
-                            <p className="font-semibold text-charcoal">Status: {employee.presence?.status}</p>
-                            <p className="text-sm text-slate-gray">{employee.presence?.location}</p>
+                            <p className="font-semibold text-charcoal">Status: {isPunchedIn ? 'Punched In' : 'Punched Out'}</p>
+                            <p className="text-sm text-slate-gray">{isConnected ? "Connected to Office Wi-Fi" : "Wi-Fi Disconnected"}</p>
                         </div>
                     </div>
                     <div className="flex gap-2">
+                        <Button onClick={handlePunch} variant={isPunchedIn ? "outline" : "default"} disabled={!isConnected} className="w-32">
+                          {isPunchedIn ? "Punch Out" : "Punch In"}
+                        </Button>
                         <LeaveRequestDialog onNewRequest={handleNewRequest} />
                         <Button variant="secondary" className="transition-transform hover:scale-105">Request Regularization</Button>
                     </div>
                 </CardContent>
             </Card>
 
-            <div className="grid gap-6 md:grid-cols-3">
+            {!isConnected && (
+              <Alert variant="destructive">
+                <WifiOff className="h-4 w-4" />
+                <AlertTitle>You are disconnected from the office Wi-Fi.</AlertTitle>
+              </Alert>
+            )}
+
+            <div className="grid gap-6 md:grid-cols-4">
                 <Card className="rounded-xl shadow-md">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-base font-semibold">Leave Balance</CardTitle>
@@ -148,6 +194,15 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
                     <CardContent className="flex items-center justify-between">
                         <div className="text-3xl font-bold text-charcoal">{employee.stats.perfectStreak} <span className="text-lg font-medium">Days</span></div>
                         <Flame className="h-10 w-10 text-orange-400" />
+                    </CardContent>
+                </Card>
+                <Card className="rounded-xl shadow-md">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-semibold">Half-Days This Quarter</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex items-center justify-between">
+                        <div className="text-3xl font-bold text-charcoal">{employee.halfDays || 0}</div>
+                        <TrendingDown className="h-10 w-10 text-destructive" />
                     </CardContent>
                 </Card>
                  <Card className="rounded-xl shadow-md">
@@ -176,7 +231,11 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
             
             <Card className="rounded-xl shadow-md">
                 <CardHeader>
+                  <div className="flex justify-between items-center">
                     <CardTitle>My Recent Requests</CardTitle>
+                     <Button variant="destructive" size="sm" onClick={simulateDisconnect}>Simulate Wi-Fi Disconnect</Button>
+                  </div>
+                    <CardDescription>You have {employee.requests.filter(r => r.status === 'Pending').length} pending requests.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -214,7 +273,7 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
       </div>
       <Sheet>
         <SheetTrigger asChild>
-            <Button className="absolute bottom-6 right-6 h-16 w-16 rounded-full shadow-lg transition-transform hover:scale-110">
+            <Button className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg transition-transform hover:scale-110">
                 <MessageCircle className="h-8 w-8"/>
             </Button>
         </SheetTrigger>

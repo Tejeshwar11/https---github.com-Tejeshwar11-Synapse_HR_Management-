@@ -1,3 +1,4 @@
+
 import type { Employee, HrAdmin, LeaveRequest, AttendanceRecord, RequestStatus } from '@/lib/types';
 import { subDays, format, addDays, parseISO } from 'date-fns';
 
@@ -49,12 +50,10 @@ const generateAttendanceHistory = (employeeId: string): AttendanceRecord[] => {
     const today = new Date();
     const seed = parseInt(employeeId, 10);
     
-    // Loop from 0 (today) to 89 (89 days ago)
     for (let i = 0; i < 90; i++) {
         const date = subDays(today, i);
         const dayOfWeek = date.getDay();
         
-        // Skip weekends
         if (dayOfWeek === 0 || dayOfWeek === 6) continue;
 
         const random = seededRandom(seed + i);
@@ -67,7 +66,12 @@ const generateAttendanceHistory = (employeeId: string): AttendanceRecord[] => {
         
         history.push({ date: format(date, 'yyyy-MM-dd'), status });
     }
-    return history;
+    // Ensure today has a record
+    const todayStr = format(today, 'yyyy-MM-dd');
+    if (!history.some(h => h.date === todayStr) && today.getDay() !== 0 && today.getDay() !== 6) {
+        history.unshift({ date: todayStr, status: seededRandom(seed - 1) < 0.8 ? 'present' : 'on-leave' });
+    }
+    return history.sort((a, b) => b.date.localeCompare(a.date));
 };
 
 // Generate some leave requests
@@ -76,11 +80,10 @@ const generateLeaveRequests = (employeeId: string, attendance: AttendanceRecord[
     const onLeaveDays = attendance.filter(a => a.status === 'on-leave');
     const seed = parseInt(employeeId, 10);
     
-    // Create requests based on some of the on-leave days
     for (let i = 0; i < onLeaveDays.length && i < 4; i++) {
-        if (seededRandom(seed + i * 10) > 0.6) { // Don't create requests for all leaves
+        if (seededRandom(seed + i * 10) > 0.6) {
             const startDate = parseISO(onLeaveDays[i].date);
-            const endDate = addDays(startDate, Math.floor(seededRandom(seed + i * 20) * 3)); // 0-3 days duration
+            const endDate = addDays(startDate, Math.floor(seededRandom(seed + i * 20) * 3));
             
             const randomStatus = seededRandom(seed + i * 30);
             let status: RequestStatus;
@@ -107,7 +110,6 @@ const generateLeaveRequests = (employeeId: string, attendance: AttendanceRecord[
 let allEmployees: Employee[] = [];
 let currentId = 101;
 
-// Define department sizes, aiming for 800-1000 employees
 const deptCounts: Record<string, number> = {
     'Quantum Computing R&D': 150,
     'Fusion Engineering': 180,
@@ -128,11 +130,12 @@ for (const dept in deptCounts) {
         const lastName = LAST_NAMES[Math.floor(seededRandom(seed + 1) * LAST_NAMES.length)];
         const roles = ROLES_BY_DEPT[dept] || ['Associate'];
         const role = roles[Math.floor(seededRandom(seed + 2) * roles.length)];
-        const isHighRisk = seededRandom(seed + 3) < 0.15; // 15% chance of being high risk
+        const isHighRisk = seededRandom(seed + 3) < 0.15;
 
         const attendance = generateAttendanceHistory(id);
         const requests = generateLeaveRequests(id, attendance);
         const usedLeave = requests.filter(r => r.status === 'Approved').length;
+        const halfDays = attendance.filter(a => a.status === 'half-day').length;
         
         const todaysAttendance = attendance.find(a => a.date === format(new Date(), 'yyyy-MM-dd'));
 
@@ -143,15 +146,16 @@ for (const dept in deptCounts) {
             department: dept,
             avatarUrl: `https://picsum.photos/seed/${id}/150/150`,
             email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${id}@synapse.corp`,
+            halfDays: halfDays,
             stats: {
                 leaveBalance: { used: usedLeave, total: 20 },
                 perfectStreak: Math.floor(seededRandom(seed + 5) * 80),
-                collaborationIndex: parseFloat((seededRandom(seed + 6) * 4 + 6).toFixed(1)), // 6.0 to 10.0
+                collaborationIndex: parseFloat((seededRandom(seed + 6) * 4 + 6).toFixed(1)),
             },
             requests,
             attendance,
             flightRisk: isHighRisk ? {
-                score: Math.floor(seededRandom(seed + 7) * 30) + 70, // 70-99%
+                score: Math.floor(seededRandom(seed + 7) * 30) + 70,
                 contributingFactors: [...new Set(Array.from({ length: Math.floor(seededRandom(seed+8) * 3) + 1 }, () => FLIGHT_RISK_FACTORS[Math.floor(seededRandom(Date.now() + Math.random()) * FLIGHT_RISK_FACTORS.length)]))],
             } : undefined,
             presence: {
@@ -171,12 +175,13 @@ for (const dept in deptCounts) {
 const priyaSharmaData = allEmployees.find(e => e.name.includes('Priya')) || allEmployees[0];
 const priyaSharma: Employee = {
     ...priyaSharmaData,
-    id: priyaSharmaData.id,
+    id: '282',
     name: 'Priya Sharma',
     role: 'Lead Fusion Engineer',
     department: 'Fusion Engineering',
-    avatarUrl: `https://picsum.photos/seed/${priyaSharmaData.id}/150/150`,
+    avatarUrl: `https://picsum.photos/seed/282/150/150`,
     email: 'priya.sharma@synapse.corp',
+    halfDays: 2,
     stats: {
         leaveBalance: { used: 5, total: 20 },
         perfectStreak: 42,
@@ -187,17 +192,18 @@ const priyaSharma: Employee = {
         { id: 'req-priya-2', type: 'regularization', startDate: format(subDays(new Date(), 45), 'yyyy-MM-dd'), endDate: format(subDays(new Date(), 45), 'yyyy-MM-dd'), status: 'Approved', reason: 'Forgot to punch in' },
         { id: 'req-priya-3', type: 'leave', startDate: format(addDays(new Date(), 10), 'yyyy-MM-dd'), endDate: format(addDays(new Date(), 15), 'yyyy-MM-dd'), status: 'Pending', reason: 'Conference' },
     ],
-    attendance: priyaSharmaData.attendance,
+    attendance: generateAttendanceHistory('282'),
+    presence: { status: 'In Office', location: 'Fusion Control Room' },
 };
 
 const davidChenData = allEmployees.find(e => e.name.includes('David')) || allEmployees[1];
 const davidChen: Employee = {
     ...davidChenData,
-    id: davidChenData.id,
+    id: '102',
     name: 'David Chen',
     role: 'Lead Research Scientist',
     department: 'Quantum Computing R&D',
-    avatarUrl: `https://picsum.photos/seed/${davidChenData.id}/150/150`,
+    avatarUrl: `https://picsum.photos/seed/102/150/150`,
     email: 'david.chen@synapse.corp',
     stats: { ...davidChenData.stats, collaborationIndex: 6.8 },
     flightRisk: {
@@ -208,7 +214,7 @@ const davidChen: Employee = {
             '↓ Below target Collaboration Index',
         ],
     },
-    attendance: davidChenData.attendance,
+    attendance: generateAttendanceHistory('102'),
 };
 
 const fatimaAlJamil: HrAdmin = {
@@ -218,13 +224,12 @@ const fatimaAlJamil: HrAdmin = {
 };
 
 
-// Replace or add the specific employees to the main list
 const findAndReplace = (employee: Employee) => {
     const index = allEmployees.findIndex(e => e.id === employee.id);
     if (index !== -1) {
         allEmployees[index] = employee;
     } else {
-        allEmployees.unshift(employee); // Add to beginning
+        allEmployees.unshift(employee);
     }
 };
 findAndReplace(priyaSharma);
@@ -239,12 +244,14 @@ export const mockFatimaAlJamil = fatimaAlJamil;
 
 const totalPendingRequests = allEmployees.reduce((acc, emp) => acc + emp.requests.filter(r => r.status === 'Pending').length, 0);
 const todayStr = format(new Date(), 'yyyy-MM-dd');
+const presentToday = mockEmployees.filter(e => e.attendance?.find(a => a.date === todayStr)?.status === 'present').length;
+const onLeaveToday = mockEmployees.filter(e => e.attendance?.find(a => a.date === todayStr)?.status === 'on-leave').length;
 
 export const hrDashboardData = {
     workforcePulse: {
-        totalPresent: mockEmployees.filter(e => e.attendance.find(a => a.date === todayStr)?.status === 'present').length,
+        totalPresent: presentToday,
         totalWorkforce: mockEmployees.length,
-        onLeave: mockEmployees.filter(e => e.attendance.find(a => a.date === todayStr)?.status === 'on-leave').length,
+        onLeave: onLeaveToday,
         highFlightRisk: mockEmployees.filter(e => e.flightRisk && e.flightRisk.score > 70).length,
         pendingApprovals: totalPendingRequests,
     },

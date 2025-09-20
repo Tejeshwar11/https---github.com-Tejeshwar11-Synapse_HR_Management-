@@ -1,3 +1,4 @@
+
 export type RequestType = 'leave' | 'regularization';
 
 export type RequestStatus = 'Approved' | 'Pending' | 'Rejected';
@@ -28,6 +29,7 @@ export type Employee = {
   department: string;
   avatarUrl: string;
   email: string;
+  halfDays?: number;
   stats: {
     leaveBalance: {
       used: number;
@@ -42,7 +44,7 @@ export type Employee = {
       contributingFactors: string[];
   };
   presence?: {
-      status: 'In Office' | 'Remote' | 'On Leave';
+      status: 'In Office' | 'Remote' | 'On Leave' | 'Punched In' | 'Punched Out';
       location?: string;
   };
   analytics?: {
