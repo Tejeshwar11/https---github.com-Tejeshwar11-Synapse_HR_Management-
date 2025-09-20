@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -63,22 +62,14 @@ function LiveClock() {
 
   useEffect(() => {
     // This effect runs only on the client
+    setTime(new Date()); // Set initial time
     const timerId = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timerId);
   }, []);
 
-  // Render placeholder on server and initial client render
-  if (!time) {
-    return (
-      <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">
-        --:--:--
-      </div>
-    );
-  }
-
   return (
     <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">
-      {format(time, "HH:mm:ss")}
+      {time ? format(time, "HH:mm:ss") : "--:--:--"}
     </div>
   );
 }
@@ -89,11 +80,6 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
   const { isConnected, disconnectCount, simulateDisconnect } = useWifi();
   const { toast } = useToast();
   const [isAiLoading, setIsAiLoading] = useState(false);
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   useEffect(() => {
     if (disconnectCount > 2) {
@@ -188,7 +174,7 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
           </div>
 
           <div className="flex flex-col items-center gap-4 w-full md:w-auto">
-            {isClient ? <LiveClock /> : <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">--:--:--</div>}
+            <LiveClock />
             <div className="flex gap-2 w-full">
               <Button onClick={handlePunchToggle} className="w-full" disabled={!isConnected}>
                 {isPunchedIn ? <LogOut className="mr-2" /> : <LogIn className="mr-2" />}
@@ -343,7 +329,7 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
                         </TableBody>
                       </Table>
                     </TooltipProvider>
-                    </Table>
+                    
                    </ScrollArea>
                   </div>
                 </div>
