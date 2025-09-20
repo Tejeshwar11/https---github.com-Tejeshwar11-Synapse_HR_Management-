@@ -32,9 +32,12 @@ import { EmployeeChatbot } from "./employee-chatbot";
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
 
 const LiveClock = () => {
-  const [time, setTime] = useState("--:--:--");
-  
+  const [time, setTime] = useState("");
+
   useEffect(() => {
+    // Set initial time on client-side to avoid hydration mismatch
+    setTime(new Date().toLocaleTimeString());
+
     const timer = setInterval(() => {
       setTime(new Date().toLocaleTimeString());
     }, 1000);
@@ -43,6 +46,10 @@ const LiveClock = () => {
       clearInterval(timer);
     };
   }, []);
+  
+  if (!time) {
+      return <p className="font-mono text-sm text-slate-gray">--:--:--</p>;
+  }
 
   return <p className="font-mono text-sm text-slate-gray">{time}</p>;
 };

@@ -134,7 +134,7 @@ export function HrDashboard({ user, data }: HrDashboardProps) {
           </div>
         </main>
       </div>
-       <Card className="fixed bottom-0 right-6 w-96 h-[400px] rounded-t-xl shadow-lg flex flex-col">
+       <Card className="relative w-96 h-[400px] rounded-t-xl shadow-lg flex flex-col m-6 mt-auto">
             <CardHeader>
                 <CardTitle>Synapse Strategic Assistant</CardTitle>
                  <CardDescription>Get instant insights and actionable plans.</CardDescription>
