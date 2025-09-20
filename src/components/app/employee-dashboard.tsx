@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -54,25 +55,18 @@ interface EmployeeDashboardProps {
 }
 
 function LiveClock() {
-  const [currentTime, setCurrentTime] = useState("--:--:--");
-  const [isClient, setIsClient] = useState(false);
+  const [time, setTime] = useState<Date | null>(null);
 
   useEffect(() => {
-    setIsClient(true);
-    const timer = setInterval(() => {
-      setCurrentTime(format(new Date(), "HH:mm:ss"));
-    }, 1000);
-    return () => clearInterval(timer);
+    setTime(new Date());
+    const timerId = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timerId);
   }, []);
 
-  if (!isClient) {
-     return <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">--:--:--</div>
-  }
-
   return (
-      <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">
-          {currentTime}
-      </div>
+    <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">
+      {time ? format(time, "HH:mm:ss") : "--:--:--"}
+    </div>
   );
 }
 
@@ -340,3 +334,5 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
     </div>
   );
 }
+
+    
