@@ -1,16 +1,11 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import {
-  Calendar,
   Flame,
-  Gauge,
-  LogOut,
   MessageCircle,
-  PlusCircle,
 } from "lucide-react";
 import {
-  Bar,
-  BarChart,
   Pie,
   PieChart,
   RadialBar,
@@ -20,7 +15,7 @@ import {
 
 import type { Employee } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -31,13 +26,55 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { AppSidebar } from "./app-sidebar";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { LeaveRequestDialog } from "./leave-request-dialog";
+import type { LeaveRequest } from "@/lib/types";
+import { EmployeeChatbot } from "./employee-chatbot";
+import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
+
 
 interface EmployeeDashboardProps {
   employee: Employee;
 }
 
-export function EmployeeDashboard({ employee }: EmployeeDashboardProps) {
+const LiveClock = () => {
+  const [time, setTime] = useState(new Date().toLocaleTimeString());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTime(new Date().toLocaleTimeString());
+    }, 1000);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
+
+  // We need to ensure the component is mounted on the client before showing the time
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+
+  return <p className="font-mono text-sm text-slate-gray">{isClient ? time : '--:--:--'}</p>;
+};
+
+
+export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboardProps) {
+  const [employee, setEmployee] = useState(initialEmployee);
+
+  const handleNewRequest = (newRequest: Omit<LeaveRequest, "id" | "status" | "employeeId" | "employeeName" | "employeeAvatar">) => {
+    const fullRequest = {
+        ...newRequest,
+        id: `req-${Date.now()}`,
+        status: 'Pending' as const,
+    };
+    setEmployee(currentEmployee => ({
+        ...currentEmployee,
+        requests: [fullRequest, ...currentEmployee.requests],
+    }));
+  };
+  
   const leaveData = [
     { name: "Used", value: employee.stats.leaveBalance.used, fill: "hsl(var(--primary))" },
     { name: "Remaining", value: employee.stats.leaveBalance.total - employee.stats.leaveBalance.used, fill: "hsl(var(--muted))" },
@@ -55,8 +92,9 @@ export function EmployeeDashboard({ employee }: EmployeeDashboardProps) {
     <div className="flex min-h-screen w-full">
       <AppSidebar userRole="employee" employee={employee} />
       <div className="flex flex-col flex-1">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
           <h1 className="text-2xl">Welcome back, {employee.name.split(" ")[0]}!</h1>
+           <LiveClock />
         </header>
         <main className="flex-1 p-4 sm:px-6 sm:py-0 space-y-6">
             <Card className="rounded-xl shadow-md">
@@ -69,7 +107,7 @@ export function EmployeeDashboard({ employee }: EmployeeDashboardProps) {
                         </div>
                     </div>
                     <div className="flex gap-2">
-                        <Button className="transition-transform hover:scale-105">Apply for Leave</Button>
+                        <LeaveRequestDialog onNewRequest={handleNewRequest} />
                         <Button variant="secondary" className="transition-transform hover:scale-105">Request Regularization</Button>
                     </div>
                 </CardContent>
@@ -81,12 +119,12 @@ export function EmployeeDashboard({ employee }: EmployeeDashboardProps) {
                         <CardTitle className="text-base font-semibold">Leave Balance</CardTitle>
                     </CardHeader>
                     <CardContent className="flex items-center justify-between">
-                        <div className="text-3xl font-bold text-charcoal">{employee.stats.leaveBalance.used} / {employee.stats.leaveBalance.total} <span className="text-lg font-medium">Days</span></div>
+                        <div className="text-3xl font-bold text-charcoal">{employee.stats.leaveBalance.total - employee.stats.leaveBalance.used} <span className="text-lg font-medium">Days Left</span></div>
                          <div className="h-20 w-20">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie data={leaveData} dataKey="value" startAngle={90} endAngle={-270} innerRadius="70%" outerRadius="100%" cornerRadius={50} paddingAngle={2}>
-                                    </PieChart>
+                                    </Pie>
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
@@ -135,14 +173,16 @@ export function EmployeeDashboard({ employee }: EmployeeDashboardProps) {
                             <TableRow>
                                 <TableHead>Type</TableHead>
                                 <TableHead>Dates</TableHead>
+                                <TableHead>Reason</TableHead>
                                 <TableHead className="text-right">Status</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {employee.requests.map((req) => (
                                 <TableRow key={req.id}>
-                                    <TableCell className="font-medium">{req.type === 'leave' ? 'Annual Leave' : 'Regularization'}</TableCell>
+                                    <TableCell className="font-medium capitalize">{req.type}</TableCell>
                                     <TableCell>{req.startDate} - {req.endDate}</TableCell>
+                                    <TableCell>{req.reason}</TableCell>
                                     <TableCell className="text-right">
                                         <Badge variant={
                                             req.status === 'Approved' ? 'default' 
@@ -161,9 +201,17 @@ export function EmployeeDashboard({ employee }: EmployeeDashboardProps) {
 
         </main>
       </div>
-      <Button className="absolute bottom-6 right-6 h-16 w-16 rounded-full shadow-lg transition-transform hover:scale-110">
-        <MessageCircle className="h-8 w-8"/>
-      </Button>
+      <Sheet>
+        <SheetTrigger asChild>
+            <Button className="absolute bottom-6 right-6 h-16 w-16 rounded-full shadow-lg transition-transform hover:scale-110">
+                <MessageCircle className="h-8 w-8"/>
+            </Button>
+        </SheetTrigger>
+        <SheetContent side="right" className="w-[400px] sm:w-[540px] p-0">
+             <EmployeeChatbot employee={employee}/>
+        </SheetContent>
+      </Sheet>
+
     </div>
   );
 }

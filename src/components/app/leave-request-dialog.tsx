@@ -36,7 +36,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import type { LeaveRequest, LeaveRequestType, RequestStatus } from "@/lib/types";
+import type { LeaveRequest, LeaveRequestType } from "@/lib/types";
 
 const formSchema = z.object({
   type: z.enum(["leave", "regularization"], { required_error: "Request type is required."}),
@@ -50,7 +50,7 @@ const formSchema = z.object({
 });
 
 interface LeaveRequestDialogProps {
-  onNewRequest: (request: Omit<LeaveRequest, "id" | "employeeId" | "employeeName" | "employeeAvatar">) => void;
+  onNewRequest: (request: Omit<LeaveRequest, "id" | "status" | "employeeId" | "employeeName" | "employeeAvatar">) => void;
 }
 
 export function LeaveRequestDialog({ onNewRequest }: LeaveRequestDialogProps) {
@@ -68,7 +68,7 @@ export function LeaveRequestDialog({ onNewRequest }: LeaveRequestDialogProps) {
       startDate: format(values.startDate, "yyyy-MM-dd"),
       endDate: format(values.endDate, "yyyy-MM-dd"),
       type: values.type as LeaveRequestType,
-      status: "pending" as RequestStatus,
+      reason: values.reason,
     });
     form.reset();
     setOpen(false);
@@ -77,8 +77,8 @@ export function LeaveRequestDialog({ onNewRequest }: LeaveRequestDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm">
-          <PlusCircle className="mr-2 h-4 w-4" /> New Request
+        <Button className="transition-transform hover:scale-105">
+          <PlusCircle className="mr-2 h-4 w-4" /> Apply for Leave
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[480px]">
