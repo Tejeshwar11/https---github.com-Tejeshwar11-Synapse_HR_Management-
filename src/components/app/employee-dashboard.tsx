@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -304,5 +305,3 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
     </div>
   );
 }
-
-    
