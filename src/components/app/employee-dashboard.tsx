@@ -105,10 +105,14 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
   const handleMissedPunchCheck = async () => {
     setIsAiLoading(true);
     try {
+      const now = new Date();
       const input: IntelligentMissedPunchNotificationInput = {
         employeeId: employee.id,
-        missedPunchTime: new Date().toISOString(),
+        employeeRole: employee.department, // Using department as a proxy for role
+        missedPunchTime: now.toISOString(),
         usualPunchTime: new Date().toISOString(), // In real app, you would have logic to determine this
+        dayOfWeek: format(now, 'EEEE'),
+        recentLeave: employee.attendance.some(a => a.status === 'on-leave' && parseISO(a.date) > new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)),
       };
       const result = await intelligentMissedPunchNotification(input);
       if (result.shouldNotify) {
@@ -136,15 +140,16 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
 
   return (
     <div className="space-y-8">
-      <Card>
-        <CardContent className="pt-6 flex flex-col md:flex-row items-center justify-between gap-6">
+      <Card className="overflow-hidden">
+        <CardContent className="pt-6 flex flex-col md:flex-row items-center justify-between gap-6 relative">
+          <div className="absolute top-0 left-0 w-full h-2/3 bg-gradient-to-r from-primary/10 to-accent/10 -z-10" />
           <div className="flex items-center gap-4">
             <Image
               src={employee.avatarUrl}
               alt={employee.name}
               width={80}
               height={80}
-              className="rounded-full border-2 border-primary"
+              className="rounded-full border-4 border-background shadow-lg"
               data-ai-hint="person portrait"
             />
             <div>
@@ -214,16 +219,16 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
             <p className="text-xs text-muted-foreground">This quarter</p>
           </CardContent>
         </Card>
-        <Card className="bg-primary/10 border-primary/50">
+        <Card className="bg-primary/10 border-primary/50 flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-primary">Missed a Punch?</CardTitle>
             <Siren className="h-4 w-4 text-primary" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-grow flex flex-col justify-center">
             <p className="text-xs text-muted-foreground mb-2">Let our AI assistant check if a notification is needed.</p>
             <Button size="sm" className="w-full" onClick={handleMissedPunchCheck} disabled={isAiLoading}>
               {isAiLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isAiLoading ? "Checking..." : "Check with AI"}
+              {isAiLoading ? "Analyzing..." : "Check with AI"}
             </Button>
           </CardContent>
         </Card>
@@ -264,7 +269,7 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
                         </TableCell>
                         <TableCell className="capitalize">{req.type}</TableCell>
                         <TableCell>
-                           <Badge variant={req.status === 'approved' ? 'default' : req.status === 'rejected' ? 'destructive' : 'secondary'}>
+                           <Badge variant={req.status === 'approved' ? 'default' : req.status === 'rejected' ? 'destructive' : 'secondary'} className={req.status === 'approved' ? 'bg-success hover:bg-success/90' : ''}>
                             {req.status}
                            </Badge>
                         </TableCell>

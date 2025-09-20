@@ -10,7 +10,7 @@ export function AppHeader() {
   const pathname = usePathname();
 
   return (
-    <header className="bg-card border-b sticky top-0 z-50">
+    <header className="bg-card border-b sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2 font-bold text-xl text-foreground">
@@ -31,11 +31,12 @@ export function AppHeader() {
             </svg>
             AttendanceZen
           </Link>
-          <nav className="flex items-center gap-2">
+          <nav className="flex items-center gap-2 bg-muted p-1 rounded-full">
             <Button
               asChild
-              variant={pathname === "/" ? "secondary" : "ghost"}
-              className={cn("font-semibold", pathname === "/" && "bg-primary/10 text-primary hover:bg-primary/20")}
+              variant={pathname === "/" ? "default" : "ghost"}
+              className={cn("font-semibold rounded-full", pathname === "/" ? "bg-background shadow-sm" : "text-muted-foreground")}
+              size="sm"
             >
               <Link href="/">
                 <Users className="h-4 w-4 mr-2" />
@@ -44,8 +45,9 @@ export function AppHeader() {
             </Button>
             <Button
               asChild
-              variant={pathname === "/admin" ? "secondary" : "ghost"}
-              className={cn("font-semibold", pathname === "/admin" && "bg-primary/10 text-primary hover:bg-primary/20")}
+              variant={pathname === "/admin" ? "default" : "ghost"}
+              className={cn("font-semibold rounded-full", pathname === "/admin" ? "bg-background shadow-sm" : "text-muted-foreground")}
+              size="sm"
             >
               <Link href="/admin">
                 <Building className="h-4 w-4 mr-2" />
