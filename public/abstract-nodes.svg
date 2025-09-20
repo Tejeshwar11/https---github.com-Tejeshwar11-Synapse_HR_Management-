@@ -1,0 +1,44 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="100%" height="100%" fill="#F7FAFC"/>
+  <g stroke="#3182CE" stroke-opacity="0.1">
+    <line x1="100" y1="100" x2="300" y2="200"/>
+    <line x1="300" y1="200" x2="250" y2="400"/>
+    <line x1="100" y1="100" x2="400" y2="50"/>
+    <line x1="400" y1="50" x2="600" y2="150"/>
+    <line x1="600" y1="150" x2="700" y2="300"/>
+    <line x1="700" y1="300" x2="550" y2="450"/>
+    <line x1="550" y1="450" x2="300" y2="550"/>
+    <line x1="300" y1="550" x2="150" y2="400"/>
+    <line x1="150" y1="400" x2="100" y2="100"/>
+    <line x1="250" y1="400" x2="400" y2="500"/>
+    <line x1="400" y1="500" x2="600" y2="350"/>
+    <line x1="600" y1="350" x2="500" y2="200"/>
+    <line x1="500" y1="200" x2="300" y2="200"/>
+    <line x1="50" y1="300" x2="150" y2="400"/>
+    <line x1="750" y1="50" x2="600" y2="150"/>
+    <line x1="50" y1="550" x2="300" y2="550"/>
+  </g>
+  <g fill="#3182CE" fill-opacity="0.6" filter="url(#glow)">
+    <circle cx="100" cy="100" r="4"/>
+    <circle cx="300" cy="200" r="5"/>
+    <circle cx="250" cy="400" r="4"/>
+    <circle cx="400" cy="50" r="6"/>
+    <circle cx="600" cy="150" r="4"/>
+    <circle cx="700" cy="300" r="5"/>
+    <circle cx="550" cy="450" r="6"/>
+    <circle cx="300" cy="550" r="4"/>
+    <circle cx="150" cy="400" r="5"/>
+    <circle cx="400" cy="500" r="4"/>
+    <circle cx="600" cy="350" r="6"/>
+    <circle cx="500" cy="200" r="5"/>
+  </g>
+</svg>

@@ -1,184 +1,195 @@
-import type { Employee, LeaveRequest } from '@/lib/types';
-import { subDays, format, addDays, getDay, subYears } from 'date-fns';
-
-const today = new Date();
+import type { Employee, HrAdmin, LeaveRequest } from '@/lib/types';
+import { subDays, format } from 'date-fns';
 
 export const DEPARTMENTS = [
-  'Information Technology (IT)',
-  'Sales',
-  'Operations / Production',
-  'Engineering / Research & Development (R&D)',
-  'Customer Service / Support',
+  'Quantum Computing R&D',
+  'Fusion Engineering',
+  'Bio-Synth Division',
+  'AI Ethics & Governance',
+  'Robotics Field Operations',
   'Marketing',
   'Finance & Accounting',
-  'Supply Chain & Logistics',
 ];
 
-const FIRST_NAMES = ['Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Reyansh', 'Ayaan', 'Krishna', 'Ishaan', 'Ananya', 'Diya', 'Saanvi', 'Aadhya', 'Pari', 'Riya', 'Myra', 'Aarohi', 'Isha', 'Prisha', 'Liam', 'Olivia', 'Noah', 'Emma', 'Oliver', 'Ava', 'Elijah', 'Charlotte', 'William', 'Sophia', 'James', 'Isabella', 'Benjamin', 'Mia', 'Lucas', 'Amelia', 'Henry', 'Harper', 'Alexander', 'Evelyn'];
-const LAST_NAMES = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin', 'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez', 'Clark', 'Lewis', 'Robinson', 'Walker'];
-const PROFESSIONAL_REASONS_LEAVE = [
-    "Attending a family wedding out of state.",
-    "Medical appointment for a routine check-up.",
-    "Scheduled home renovation and repairs.",
-    "Taking a personal day for rest and relaxation.",
-    "Going on a planned vacation with family.",
-    "Child's school event participation.",
-    "Caring for a sick family member.",
-    "Government/legal appointments.",
-];
-const PROFESSIONAL_REASONS_REGULARIZATION = [
-    "Forgot to punch in due to network issues at the entrance.",
-    "System did not register my punch-out yesterday.",
-    "Was working off-site for a client meeting in the morning.",
-    "Had to leave early for a personal emergency, forgot to regularize.",
-    "Power outage at my location caused login delays.",
-];
-
-
-const generateAttendance = (numDays: number): Employee['attendance'] => {
-  const attendance: Employee['attendance'] = [];
-  const threeYearsAgo = subYears(today, 3);
-  
-  for (let i = 0; i < numDays; i++) {
-    const date = subDays(today, i);
-    if (date < threeYearsAgo) continue;
-
-    const dayOfWeek = getDay(date);
-
-    // Skip weekends
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
-      continue;
-    }
-
-    let status: Employee['attendance'][0]['status'];
-    const statusChance = Math.random();
-    if (statusChance > 0.99) status = 'absent'; // 1% chance
-    else if (statusChance > 0.97) status = 'on-leave'; // 2% chance
-    else if (statusChance > 0.95) status = 'half-day'; // 2% chance
-    else status = 'present'; // 95% chance
-
-    attendance.push({
-      date: format(date, 'yyyy-MM-dd'),
-      status,
-      punchIn: status === 'present' || status === 'half-day' ? '09:30' : undefined,
-      punchOut: status === 'present' ? '18:30' : status === 'half-day' ? '14:00' : undefined,
-    });
-  }
-   // Add today's status
-  if (getDay(today) !== 0 && getDay(today) !== 6){
-      const currentDayRecord = attendance.find(a => a.date === format(today, 'yyyy-MM-dd'));
-      if (!currentDayRecord) {
-        attendance.unshift({
-            date: format(today, 'yyyy-MM-dd'),
-            status: Math.random() > 0.2 ? 'present' : 'on-leave',
-            punchIn: '09:25',
-            punchOut: undefined
-        });
-      }
-  }
-
-  return attendance.sort((a, b) => b.date.localeCompare(a.date));
+const FIRST_NAMES = ['Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Reyansh', 'Ayaan', 'Krishna', 'Ishaan', 'Ananya', 'Diya', 'Saanvi', 'Aadhya', 'Pari', 'Riya', 'Myra', 'Aarohi', 'Isha', 'Prisha', 'Liam', 'Olivia', 'Noah', 'Emma', 'Oliver', 'Ava', 'Elijah', 'Charlotte', 'William', 'Sophia', 'James', 'Isabella', 'Benjamin', 'Mia', 'Lucas', 'Amelia', 'Henry', 'Harper', 'Alexander', 'Evelyn', 'Priya', 'David', 'Fatima'];
+const LAST_NAMES = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin', 'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez', 'Clark', 'Lewis', 'Robinson', 'Walker', 'Sharma', 'Chen', 'Al-Jamil'];
+const ROLES_BY_DEPT: Record<string, string[]> = {
+    'Quantum Computing R&D': ['Lead Research Scientist', 'Quantum Theorist', 'Research Associate'],
+    'Fusion Engineering': ['Lead Fusion Engineer', 'Plasma Physicist', 'Materials Scientist'],
+    'Bio-Synth Division': ['Geneticist', 'Bio-informatics Specialist', 'Lab Technician'],
+    'AI Ethics & Governance': ['AI Ethicist', 'Policy Analyst', 'Compliance Officer'],
+    'Robotics Field Operations': ['Robotics Engineer', 'Field Technician', 'Drone Operator'],
+    'Marketing': ['Marketing Lead', 'Content Strategist', 'Digital Marketer'],
+    'Finance & Accounting': ['Accountant', 'Financial Analyst', 'Controller'],
 };
+const FLIGHT_RISK_FACTORS = [
+    '↓ Decreased time in collaboration zones',
+    '↑ Increased short-notice leaves',
+    '↓ Below target Collaboration Index',
+    '↓ Reduced project velocity',
+    '↑ Increase in after-hours work',
+];
 
-const generateEmployees = (min: number, max: number): Employee[] => {
-  const count = Math.floor(Math.random() * (max - min + 1)) + min;
-  const employees: Employee[] = [];
-  let departmentIndex = 0;
+// Helper to generate a specified number of employees for a department
+const generateDeptEmployees = (count: number, department: string, startId: number): Employee[] => {
+    const employees: Employee[] = [];
+    for (let i = 0; i < count; i++) {
+        const id = `${startId + i}`;
+        const firstName = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
+        const lastName = LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)];
+        const roles = ROLES_BY_DEPT[department] || ['Associate'];
+        const role = roles[Math.floor(Math.random() * roles.length)];
+        const isHighRisk = Math.random() < 0.15; // 15% chance of being high risk
 
-  for (let i = 1; i <= count; i++) {
-    const id = `emp-${String(i).padStart(4, '0')}`;
-    const firstName = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
-    const lastName = LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)];
-    
-    // Distribute employees somewhat evenly across departments
-    const department = DEPARTMENTS[departmentIndex];
-    departmentIndex = (departmentIndex + 1) % DEPARTMENTS.length;
-    
-    const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@examplecorp.com`;
-
-    employees.push({
-      id,
-      name: `${firstName} ${lastName}`,
-      avatarUrl: `https://picsum.photos/seed/${id}/150/150`,
-      email,
-      department,
-      usualPunchIn: '09:30',
-      usualPunchOut: '18:30',
-      leaveBalance: Math.floor(Math.random() * 15) + 5,
-      halfDays: Math.floor(Math.random() * 5),
-      attendance: generateAttendance(365 * 3), // 3 years of data
-      requests: [],
-    });
-  }
-  return employees;
-};
-
-export const mockEmployees: Employee[] = generateEmployees(800, 1000);
-
-const generateLeaveRequests = (employees: Employee[]): LeaveRequest[] => {
-    const requests: LeaveRequest[] = [];
-    
-    // Generate a few pending requests
-    for (let i = 0; i < 15; i++) { // Increased pending requests
-        const employee = employees[Math.floor(Math.random() * employees.length)];
-        const isLeave = Math.random() > 0.5;
-        const startDate = addDays(today, Math.floor(Math.random() * 10) + 1);
-        const endDate = isLeave ? addDays(startDate, Math.floor(Math.random() * 5)) : startDate;
-
-        requests.push({
-            id: `req-pending-${i}`,
-            employeeId: employee.id,
-            employeeName: employee.name,
-            employeeAvatar: employee.avatarUrl,
-            type: isLeave ? 'leave' : 'regularization',
-            startDate: format(startDate, 'yyyy-MM-dd'),
-            endDate: format(endDate, 'yyyy-MM-dd'),
-            reason: isLeave 
-                ? PROFESSIONAL_REASONS_LEAVE[Math.floor(Math.random() * PROFESSIONAL_REASONS_LEAVE.length)]
-                : PROFESSIONAL_REASONS_REGULARIZATION[Math.floor(Math.random() * PROFESSIONAL_REASONS_REGULARIZATION.length)],
-            status: 'pending'
+        employees.push({
+            id,
+            name: `${firstName} ${lastName}`,
+            role,
+            department,
+            avatarUrl: `https://picsum.photos/seed/${id}/150/150`,
+            email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${id}@synapse.corp`,
+            stats: {
+                leaveBalance: { used: Math.floor(Math.random() * 8), total: 20 },
+                perfectStreak: Math.floor(Math.random() * 80),
+                collaborationIndex: parseFloat((Math.random() * 4 + 6).toFixed(1)), // 6.0 to 10.0
+            },
+            requests: [],
+            flightRisk: isHighRisk ? {
+                score: Math.floor(Math.random() * 30) + 70, // 70-99%
+                contributingFactors: FLIGHT_RISK_FACTORS.slice(0, Math.floor(Math.random() * 3) + 1),
+            } : undefined,
+             presence: {
+                status: 'In Office',
+                location: 'Engineering Wing'
+            },
+            analytics: {
+                presenceHeatmapUrl: '/heatmap-placeholder.png'
+            }
         });
     }
-
-    // Generate historical requests for employees
-    employees.forEach(employee => {
-        const numRequests = Math.floor(Math.random() * 5) + 1; // 1-5 requests per employee
-        for (let i=0; i < numRequests; i++) {
-            const isLeave = Math.random() > 0.3;
-            const pastDate = subDays(today, Math.floor(Math.random() * 365 * 2));
-            const startDate = pastDate;
-            const endDate = isLeave ? addDays(startDate, Math.floor(Math.random() * 3)) : startDate;
-            
-            requests.push({
-                id: `req-${employee.id}-${i}`,
-                employeeId: employee.id,
-                employeeName: employee.name,
-                employeeAvatar: employee.avatarUrl,
-                type: isLeave ? 'leave' : 'regularization',
-                startDate: format(startDate, 'yyyy-MM-dd'),
-                endDate: format(endDate, 'yyyy-MM-dd'),
-                reason: isLeave 
-                    ? PROFESSIONAL_REASONS_LEAVE[Math.floor(Math.random() * PROFESSIONAL_REASONS_LEAVE.length)]
-                    : PROFESSIONAL_REASONS_REGULARIZATION[Math.floor(Math.random() * PROFESSIONAL_REASONS_REGULARIZATION.length)],
-                status: Math.random() > 0.1 ? 'approved' : 'rejected'
-            });
-        }
-    });
-
-    return requests;
+    return employees;
 };
 
+// Generate employees with specified distribution
+let allEmployees: Employee[] = [];
+let currentId = 100;
+const deptCounts: Record<string, number> = {
+    'Quantum Computing R&D': 150,
+    'Fusion Engineering': 180,
+    'Bio-Synth Division': 160,
+    'AI Ethics & Governance': 120,
+    'Robotics Field Operations': 200,
+    'Marketing': 90,
+    'Finance & Accounting': 100,
+};
 
-export const mockLeaveRequests: LeaveRequest[] = generateLeaveRequests(mockEmployees);
+for (const dept in deptCounts) {
+    const count = deptCounts[dept];
+    const deptEmployees = generateDeptEmployees(count, dept, currentId);
+    allEmployees = allEmployees.concat(deptEmployees);
+    currentId += count;
+}
 
-// Add requests to employees
-mockLeaveRequests.forEach(req => {
-  const employee = mockEmployees.find(e => e.id === req.employeeId);
-  if (employee) {
-    if (!employee.requests) {
-        employee.requests = [];
+
+// Manually create/modify specific employees for the demo
+const priyaSharma: Employee = {
+    id: '734',
+    name: 'Priya Sharma',
+    role: 'Lead Fusion Engineer',
+    department: 'Fusion Engineering',
+    avatarUrl: 'https://picsum.photos/seed/734/150/150',
+    email: 'priya.sharma@synapse.corp',
+    stats: {
+        leaveBalance: { used: 9, total: 20 },
+        perfectStreak: 42,
+        collaborationIndex: 7.8,
+    },
+    requests: [
+        { id: 'req-1', type: 'leave', startDate: '2024-08-15', endDate: '2024-08-17', status: 'Approved' },
+        { id: 'req-2', type: 'regularization', startDate: '2024-07-22', endDate: '2024-07-22', status: 'Approved' },
+        { id: 'req-3', type: 'leave', startDate: '2024-09-05', endDate: '2024-09-10', status: 'Pending' },
+    ],
+    presence: {
+        status: 'In Office',
+        location: 'Engineering Wing'
+    },
+    analytics: {
+       presenceHeatmapUrl: '/heatmap-placeholder.png'
     }
-    employee.requests.push(req);
-    employee.requests.sort((a, b) => b.startDate.localeCompare(a.startDate));
-  }
-});
+};
+
+const davidChen: Employee = {
+    id: '123',
+    name: 'David Chen',
+    role: 'Lead Research Scientist',
+    department: 'Quantum Computing R&D',
+    avatarUrl: `https://picsum.photos/seed/123/150/150`,
+    email: 'david.chen@synapse.corp',
+    stats: {
+        leaveBalance: { used: 12, total: 20 },
+        perfectStreak: 8,
+        collaborationIndex: 6.8,
+    },
+    requests: [],
+    flightRisk: {
+        score: 78,
+        contributingFactors: [
+            '↓ Decreased time in collaboration zones',
+            '↑ Increased short-notice leaves',
+            '↓ Below target Collaboration Index',
+        ],
+    },
+    analytics: {
+        presenceHeatmapUrl: '/heatmap-placeholder.png'
+    }
+};
+
+const fatimaAlJamil: HrAdmin = {
+    id: '801',
+    name: 'Fatima Al-Jamil',
+    avatarUrl: `https://picsum.photos/seed/801/150/150`,
+};
+
+// Replace or add the specific employees to the main list
+const findAndReplace = (employee: Employee) => {
+    const index = allEmployees.findIndex(e => e.id === employee.id);
+    if (index !== -1) {
+        allEmployees[index] = employee;
+    } else {
+        allEmployees.push(employee);
+    }
+};
+findAndReplace(priyaSharma);
+findAndReplace(davidChen);
+
+
+export const mockEmployees = allEmployees;
+export const mockPriyaSharma = priyaSharma;
+export const mockDavidChen = davidChen;
+export const mockFatimaAlJamil = fatimaAlJamil;
+
+// HR Dashboard specific data
+export const hrDashboardData = {
+    workforcePulse: {
+        totalPresent: mockEmployees.filter(e => e.presence?.status === 'In Office').length,
+        totalWorkforce: mockEmployees.length,
+        onLeave: mockEmployees.filter(e => e.presence?.status === 'On Leave').length,
+        highFlightRisk: mockEmployees.filter(e => e.flightRisk && e.flightRisk.score > 70).length,
+        pendingApprovals: 12,
+    },
+    flightRiskHotlist: mockEmployees
+        .filter(e => e.flightRisk && e.flightRisk.score > 70)
+        .sort((a, b) => b.flightRisk!.score - a.flightRisk!.score)
+        .slice(0, 5),
+    departmentCollaboration: DEPARTMENTS.map(dept => ({
+        name: dept,
+        collaborationIndex: parseFloat(
+            (allEmployees
+                .filter(e => e.department === dept)
+                .reduce((acc, e) => acc + e.stats.collaborationIndex, 0) /
+            deptCounts[dept])
+            .toFixed(1)
+        ),
+        target: 8.5
+    }))
+};

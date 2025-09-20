@@ -1,72 +1,87 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building, User } from 'lucide-react';
+import { BrainCircuit, Bluetooth, MessageCircleStar } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LandingPage() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
-      <div className="text-center max-w-2xl mx-auto p-4">
-        <div className="flex items-center justify-center mb-6">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="36"
-              height="36"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-9 w-9 text-primary"
-            >
-              <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
-              <path d="m9 12 2 2 4-4" />
-            </svg>
-            <h1 className="text-4xl font-bold ml-3">AttendanceZen</h1>
+    <div className="flex flex-col min-h-screen bg-white">
+      <header className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+                <BrainCircuit className="h-8 w-8 text-primary" />
+                <span className="text-2xl font-bold text-charcoal">Synapse</span>
+            </div>
+            <Button asChild>
+                <Link href="/login">Request a Demo</Link>
+            </Button>
         </div>
-        <p className="text-lg text-muted-foreground mb-10">
-          The intelligent, seamless, and friendly way to manage workforce attendance.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-center gap-4">
-                <div className="bg-primary/10 p-3 rounded-full">
-                  <User className="h-6 w-6 text-primary" />
+      </header>
+
+      <main className="flex-grow">
+        <section className="relative py-20 md:py-32 bg-off-white">
+            <div className="absolute inset-0 opacity-5" style={{backgroundImage: 'url(/abstract-nodes.svg)', backgroundSize: 'cover' }}></div>
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
+                <h1 className="text-4xl md:text-6xl font-bold text-charcoal leading-tight">
+                Synapse: Your Workplace, Understood.
+                </h1>
+                <p className="mt-6 max-w-3xl mx-auto text-lg md:text-xl text-slate-gray">
+                Move beyond attendance. Leverage predictive AI to understand your workforce, prevent attrition, and build a more engaged team.
+                </p>
+                <div className="mt-10">
+                    <Button size="lg" asChild>
+                        <Link href="/login">Request a Demo</Link>
+                    </Button>
                 </div>
-                <CardTitle className="text-xl">Employee Portal</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className="mb-4">
-                Punch in, view your attendance, and manage your leave requests.
-              </CardDescription>
-              <Button asChild className="w-full">
-                <Link href="/login/employee">Login as Employee</Link>
-              </Button>
-            </CardContent>
-          </Card>
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-               <div className="flex items-center gap-4">
-                <div className="bg-primary/10 p-3 rounded-full">
-                  <Building className="h-6 w-6 text-primary" />
+            </div>
+        </section>
+        
+        <section className="py-20 md:py-28 bg-white">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="grid md:grid-cols-3 gap-12">
+                    <div className="text-center">
+                        <div className="flex justify-center mb-4">
+                             <div className="bg-primary/10 p-4 rounded-full">
+                                <Bluetooth className="h-8 w-8 text-primary" />
+                             </div>
+                        </div>
+                        <h3 className="text-2xl mb-2">Dynamic Presence</h3>
+                        <p className="text-slate-gray">
+                        Frictionless, beacon-based technology provides hyper-accurate presence data, eliminating manual check-ins.
+                        </p>
+                    </div>
+                    <div className="text-center">
+                        <div className="flex justify-center mb-4">
+                             <div className="bg-primary/10 p-4 rounded-full">
+                                <BrainCircuit className="h-8 w-8 text-primary" />
+                             </div>
+                        </div>
+                        <h3 className="text-2xl mb-2">Predictive Analytics</h3>
+                        <p className="text-slate-gray">
+                        Our AI analyzes behavioral patterns to calculate employee flight risk and team collaboration scores.
+                        </p>
+                    </div>
+                     <div className="text-center">
+                        <div className="flex justify-center mb-4">
+                             <div className="bg-primary/10 p-4 rounded-full">
+                                <MessageCircleStar className="h-8 w-8 text-primary" />
+                             </div>
+                        </div>
+                        <h3 className="text-2xl mb-2">AI Strategic Assistant</h3>
+                        <p className="text-slate-gray">
+                        Empower your managers and HR teams with an AI partner that provides instant insights and actionable growth plans.
+                        </p>
+                    </div>
                 </div>
-                <CardTitle className="text-xl">HR Admin Portal</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className="mb-4">
-                Access dashboards, manage employees, and approve requests.
-              </CardDescription>
-              <Button asChild className="w-full">
-                <Link href="/login/hr">Login as HR Admin</Link>
-              </Button>
-            </CardContent>
-          </Card>
+            </div>
+        </section>
+      </main>
+
+       <footer className="bg-off-white border-t">
+        <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-slate-gray text-sm">
+          &copy; {new Date().getFullYear()} Synapse, Inc. All rights reserved.
         </div>
-      </div>
+      </footer>
     </div>
   );
 }

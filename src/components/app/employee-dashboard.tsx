@@ -1,27 +1,26 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Image from "next/image";
 import {
-  BarChart,
-  CalendarDays,
-  Clock,
-  Loader2,
-  LogIn,
+  Calendar,
+  Flame,
+  Gauge,
   LogOut,
-  MessageSquare,
-  Siren,
-  Wifi,
-  WifiOff,
+  MessageCircle,
+  PlusCircle,
 } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import {
+  Bar,
+  BarChart,
+  Pie,
+  PieChart,
+  RadialBar,
+  RadialBarChart,
+  ResponsiveContainer,
+} from "recharts";
 
-import type { Employee, LeaveRequest } from "@/lib/types";
+import type { Employee } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { useWifi } from "@/lib/hooks/use-wifi";
-import { AttendanceCalendar } from "./attendance-calendar";
-import { LeaveRequestDialog } from "./leave-request-dialog";
 import {
   Table,
   TableBody,
@@ -31,336 +30,140 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import {
-  intelligentMissedPunchNotification,
-  IntelligentMissedPunchNotificationInput,
-} from "@/ai/flows/intelligent-missed-punch-notifications";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { EmployeeChatbot } from "./employee-chatbot";
+import { AppSidebar } from "./app-sidebar";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 interface EmployeeDashboardProps {
   employee: Employee;
 }
 
-function LiveClock() {
-  const [time, setTime] = useState<Date | null>(null);
+export function EmployeeDashboard({ employee }: EmployeeDashboardProps) {
+  const leaveData = [
+    { name: "Used", value: employee.stats.leaveBalance.used, fill: "hsl(var(--primary))" },
+    { name: "Remaining", value: employee.stats.leaveBalance.total - employee.stats.leaveBalance.used, fill: "hsl(var(--muted))" },
+  ];
 
-  useEffect(() => {
-    // Set initial time on client mount
-    setTime(new Date());
-    // Update time every second
-    const timerId = setInterval(() => setTime(new Date()), 1000);
-    // Cleanup interval on component unmount
-    return () => clearInterval(timerId);
-  }, []); // Empty dependency array ensures this runs only once on mount
-
-  // On initial render (and on server), time will be null.
-  // We'll show a placeholder to prevent hydration mismatch.
-  const displayTime = time ? format(time, "HH:mm:ss") : "--:--:--";
+  const collaborationData = [
+      {
+        name: 'Collaboration',
+        value: employee.stats.collaborationIndex * 10,
+        fill: 'hsl(var(--primary))',
+      },
+  ];
 
   return (
-    <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">
-      {displayTime}
-    </div>
-  );
-}
+    <div className="flex min-h-screen w-full">
+      <AppSidebar userRole="employee" employee={employee} />
+      <div className="flex flex-col flex-1">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+          <h1 className="text-2xl">Welcome back, {employee.name.split(" ")[0]}!</h1>
+        </header>
+        <main className="flex-1 p-4 sm:px-6 sm:py-0 space-y-6">
+            <Card className="rounded-xl shadow-md">
+                <CardContent className="p-6 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="w-2.5 h-2.5 rounded-full bg-success" />
+                        <div>
+                            <p className="font-semibold text-charcoal">Status: {employee.presence?.status}</p>
+                            <p className="text-sm text-slate-gray">{employee.presence?.location}</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-2">
+                        <Button className="transition-transform hover:scale-105">Apply for Leave</Button>
+                        <Button variant="secondary" className="transition-transform hover:scale-105">Request Regularization</Button>
+                    </div>
+                </CardContent>
+            </Card>
 
-
-export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboardProps) {
-  const [employee, setEmployee] = useState(initialEmployee);
-  const [isPunchedIn, setIsPunchedIn] = useState(false);
-  const { isConnected, disconnectCount, simulateDisconnect } = useWifi();
-  const { toast } = useToast();
-  const [isAiLoading, setIsAiLoading] = useState(false);
-
-  useEffect(() => {
-    if (disconnectCount > 2) {
-      toast({
-        variant: "destructive",
-        title: "Auto Half-Day Marked",
-        description: "You have disconnected from the office Wi-Fi more than twice.",
-      });
-    }
-  }, [disconnectCount, toast]);
-
-  const handlePunchToggle = () => {
-    setIsPunchedIn(!isPunchedIn);
-    toast({
-      title: `Successfully Punched ${isPunchedIn ? "Out" : "In"}`,
-      description: `Time: ${format(new Date(), "HH:mm")}`,
-    });
-  };
-
-  const handleNewRequest = (newRequest: Omit<LeaveRequest, "id" | "employeeId" | "employeeName" | "employeeAvatar">) => {
-    const createdRequest: LeaveRequest = {
-      ...newRequest,
-      id: `req-${Date.now()}`,
-      employeeId: employee.id,
-      employeeName: employee.name,
-      employeeAvatar: employee.avatarUrl,
-    };
-    setEmployee(prev => ({
-      ...prev,
-      requests: [createdRequest, ...prev.requests],
-    }));
-    toast({
-      title: "Request Submitted",
-      description: "Your request has been submitted for approval.",
-    });
-  };
-
-  const handleMissedPunchCheck = async () => {
-    setIsAiLoading(true);
-    try {
-      const now = new Date();
-      const input: IntelligentMissedPunchNotificationInput = {
-        employeeId: employee.id,
-        employeeRole: employee.department, // Using department as a proxy for role
-        missedPunchTime: now.toISOString(),
-        usualPunchTime: new Date(now.setHours(9, 30, 0, 0)).toISOString(),
-        dayOfWeek: format(now, 'EEEE'),
-        recentLeave: employee.attendance.some(a => a.status === 'on-leave' && parseISO(a.date) > new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)),
-      };
-      const result = await intelligentMissedPunchNotification(input);
-      if (result.shouldNotify) {
-        toast({
-          variant: "destructive",
-          title: "Missed Punch Alert",
-          description: result.reason,
-        });
-      } else {
-        toast({
-          title: "No Action Needed",
-          description: result.reason,
-        });
-      }
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not check for missed punches.",
-      });
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
-
-  return (
-    <div className="space-y-8">
-      <Card className="overflow-hidden">
-        <CardContent className="pt-6 flex flex-col md:flex-row items-center justify-between gap-6 relative">
-          <div className="absolute top-0 left-0 w-full h-2/3 bg-gradient-to-r from-primary/10 to-accent/10 -z-10" />
-          <div className="flex items-center gap-4">
-            <Image
-              src={employee.avatarUrl}
-              alt={employee.name}
-              width={80}
-              height={80}
-              className="rounded-full border-4 border-background shadow-lg"
-              data-ai-hint="person portrait"
-            />
-            <div>
-              <h1 className="text-2xl font-bold">Welcome back, {employee.name.split(" ")[0]}!</h1>
-              <p className="text-muted-foreground">{employee.department} Department</p>
+            <div className="grid gap-6 md:grid-cols-3">
+                <Card className="rounded-xl shadow-md">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-semibold">Leave Balance</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex items-center justify-between">
+                        <div className="text-3xl font-bold text-charcoal">{employee.stats.leaveBalance.used} / {employee.stats.leaveBalance.total} <span className="text-lg font-medium">Days</span></div>
+                         <div className="h-20 w-20">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie data={leaveData} dataKey="value" startAngle={90} endAngle={-270} innerRadius="70%" outerRadius="100%" cornerRadius={50} paddingAngle={2}>
+                                    </PieChart>
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </CardContent>
+                </Card>
+                 <Card className="rounded-xl shadow-md">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-semibold">Perfect Streak</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex items-center justify-between">
+                        <div className="text-3xl font-bold text-charcoal">{employee.stats.perfectStreak} <span className="text-lg font-medium">Days</span></div>
+                        <Flame className="h-10 w-10 text-orange-400" />
+                    </CardContent>
+                </Card>
+                 <Card className="rounded-xl shadow-md">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-semibold">Collaboration Index</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex items-center justify-between">
+                        <div className="text-3xl font-bold text-charcoal">{employee.stats.collaborationIndex} / 10</div>
+                         <div className="h-20 w-20">
+                           <ResponsiveContainer width="100%" height="100%">
+                             <RadialBarChart
+                                startAngle={90}
+                                endAngle={-270}
+                                innerRadius="70%"
+                                outerRadius="100%"
+                                barSize={10}
+                                data={collaborationData}
+                             >
+                                <RadialBar background dataKey="value" cornerRadius={50} />
+                             </RadialBarChart>
+                           </ResponsiveContainer>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
-          </div>
-
-          <div className="flex flex-col items-center gap-4 w-full md:w-auto">
-            <LiveClock />
-            <div className="flex gap-2 w-full">
-              <Button onClick={handlePunchToggle} className="w-full" disabled={!isConnected}>
-                {isPunchedIn ? <LogOut className="mr-2" /> : <LogIn className="mr-2" />}
-                Punch {isPunchedIn ? "Out" : "In"}
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" className="w-full">
-                    <WifiOff className="mr-2" /> Disconnect
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Simulate Wi-Fi Disconnect?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This simulates disconnecting from the office Wi-Fi. Disconnecting more than twice will result in an automatic half-day.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={simulateDisconnect}>Disconnect</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-             <div className="flex items-center text-sm font-medium text-muted-foreground">
-              {isConnected ? (
-                <><Wifi className="w-4 h-4 mr-2 text-success" />Connected to Office Network</>
-              ) : (
-                <><WifiOff className="w-4 h-4 mr-2 text-destructive" />Disconnected. Reconnecting...</>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Leave Balance</CardTitle>
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{employee.leaveBalance} Days</div>
-            <p className="text-xs text-muted-foreground">Remaining for the year</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Half-Days Taken</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{employee.halfDays}</div>
-            <p className="text-xs text-muted-foreground">This quarter</p>
-          </CardContent>
-        </Card>
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Attendance Rate</CardTitle>
-                <BarChart className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">98.5%</div>
-                <p className="text-xs text-muted-foreground">For the current month</p>
-            </CardContent>
-        </Card>
-        <Card className="bg-primary/10 border-primary/50 flex flex-col">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-primary">Missed a Punch?</CardTitle>
-            <Siren className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent className="flex-grow flex flex-col justify-center">
-            <p className="text-xs text-muted-foreground mb-2">Let our AI assistant check if a notification is needed.</p>
-            <Button size="sm" className="w-full" onClick={handleMissedPunchCheck} disabled={isAiLoading}>
-              {isAiLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isAiLoading ? "Analyzing..." : "Check with AI"}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-       <Tabs defaultValue="activity" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="activity">Your Activity</TabsTrigger>
-          <TabsTrigger value="history">Full Attendance History</TabsTrigger>
-          <TabsTrigger value="chatbot"><MessageSquare className="mr-2 h-4 w-4"/>Ask AI</TabsTrigger>
-        </TabsList>
-        <TabsContent value="activity">
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Activity</CardTitle>
-                 <CardDescription>A summary of your attendance for the current month and your recent requests.</CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-8 lg:grid-cols-2">
-                <div>
-                  <h3 className="font-semibold mb-4 text-lg">This Month's Calendar</h3>
-                  <div className="p-4 border rounded-lg bg-card">
-                      <AttendanceCalendar attendance={employee.attendance} />
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                       <h3 className="font-semibold text-lg">Leave & Regularization Requests</h3>
-                       <LeaveRequestDialog onNewRequest={handleNewRequest} />
-                  </div>
-                  <div className="border rounded-lg">
-                   <ScrollArea className="h-[300px]">
-                    <TooltipProvider>
-                      <Table>
+            
+            <Card className="rounded-xl shadow-md">
+                <CardHeader>
+                    <CardTitle>My Recent Requests</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Table>
                         <TableHeader>
-                          <TableRow>
-                            <TableHead>Dates</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Reason</TableHead>
-                            <TableHead className="text-right">Status</TableHead>
-                          </TableRow>
+                            <TableRow>
+                                <TableHead>Type</TableHead>
+                                <TableHead>Dates</TableHead>
+                                <TableHead className="text-right">Status</TableHead>
+                            </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {employee.requests.length > 0 ? (
-                            employee.requests.map((req) => (
-                              <TableRow key={req.id}>
-                                <TableCell className="font-medium">
-                                  {format(parseISO(req.startDate), "MMM d")}
-                                  {req.startDate !== req.endDate && ` - ${format(parseISO(req.endDate), "MMM d")}`}
-                                </TableCell>
-                                <TableCell className="capitalize">{req.type}</TableCell>
-                                <TableCell>
-                                  <Tooltip>
-                                    <TooltipTrigger className="max-w-[150px] truncate text-left">
-                                      {req.reason}
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p className="max-w-[300px]">{req.reason}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <Badge variant={req.status === 'approved' ? 'default' : req.status === 'rejected' ? 'destructive' : 'secondary'} className={req.status === 'approved' ? 'bg-success hover:bg-success/90' : ''}>
-                                    {req.status}
-                                  </Badge>
-                                </TableCell>
-                              </TableRow>
-                            ))
-                          ) : (
-                            <TableRow>
-                              <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                                No requests found.
-                              </TableCell>
-                            </TableRow>
-                          )}
+                            {employee.requests.map((req) => (
+                                <TableRow key={req.id}>
+                                    <TableCell className="font-medium">{req.type === 'leave' ? 'Annual Leave' : 'Regularization'}</TableCell>
+                                    <TableCell>{req.startDate} - {req.endDate}</TableCell>
+                                    <TableCell className="text-right">
+                                        <Badge variant={
+                                            req.status === 'Approved' ? 'default' 
+                                            : req.status === 'Pending' ? 'secondary'
+                                            : 'destructive'
+                                        } className={req.status === 'Approved' ? 'bg-success' : req.status === 'Pending' ? 'bg-pending text-pending-foreground': ''}>
+                                            {req.status}
+                                        </Badge>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
                         </TableBody>
-                      </Table>
-                    </TooltipProvider>
-                    
-                   </ScrollArea>
-                  </div>
-                </div>
-              </CardContent>
+                    </Table>
+                </CardContent>
             </Card>
-        </TabsContent>
-        <TabsContent value="history">
-          <Card>
-            <CardHeader>
-                <CardTitle>Full Attendance History</CardTitle>
-                <CardDescription>Your complete attendance record for the last 3 years.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <ScrollArea className="w-full pb-4">
-                    <div className="w-[3600px] p-4">
-                      <AttendanceCalendar attendance={employee.attendance} months={36} />
-                    </div>
-                </ScrollArea>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="chatbot">
-            <EmployeeChatbot employee={employee} />
-        </TabsContent>
-      </Tabs>
+
+        </main>
+      </div>
+      <Button className="absolute bottom-6 right-6 h-16 w-16 rounded-full shadow-lg transition-transform hover:scale-110">
+        <MessageCircle className="h-8 w-8"/>
+      </Button>
     </div>
   );
 }

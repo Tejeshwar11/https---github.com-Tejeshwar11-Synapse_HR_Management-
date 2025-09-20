@@ -6,8 +6,8 @@ import { Inter } from 'next/font/google';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'AttendanceZen',
-  description: 'Intelligent HR Management System',
+  title: 'Synapse: Your Workplace, Understood.',
+  description: 'Leverage predictive AI to understand your workforce, prevent attrition, and build a more engaged team.',
 };
 
 export default function RootLayout({
@@ -18,7 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
-      <body className={`${inter.variable} font-body antialiased`}>
+      <body className={`${inter.variable} font-sans antialiased`}>
         <div className="flex flex-col min-h-screen bg-background">
           <main className="flex-grow">{children}</main>
         </div>
