@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -58,28 +59,28 @@ interface EmployeeDashboardProps {
 }
 
 function LiveClock() {
-    const [time, setTime] = useState<Date | null>(null);
-  
-    useEffect(() => {
-      // This effect runs only on the client
-      const timerId = setInterval(() => setTime(new Date()), 1000);
-      return () => clearInterval(timerId);
-    }, []);
-  
-    // Render placeholder on server and initial client render
-    if (!time) {
-      return (
-          <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">
-              --:--:--
-          </div>
-      );
-    }
-  
+  const [time, setTime] = useState<Date | null>(null);
+
+  useEffect(() => {
+    // This effect runs only on the client
+    const timerId = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timerId);
+  }, []);
+
+  // Render placeholder on server and initial client render
+  if (!time) {
     return (
       <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">
-        {format(time, "HH:mm:ss")}
+        --:--:--
       </div>
     );
+  }
+
+  return (
+    <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">
+      {format(time, "HH:mm:ss")}
+    </div>
+  );
 }
 
 export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboardProps) {
