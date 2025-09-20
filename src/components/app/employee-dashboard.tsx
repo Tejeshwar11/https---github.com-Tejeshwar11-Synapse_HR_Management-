@@ -48,7 +48,7 @@ const LiveClock = () => {
   }, []);
   
   if (!time) {
-      return <p className="font-mono text-sm text-slate-gray">--:--:--</p>;
+      return null;
   }
 
   return <p className="font-mono text-sm text-slate-gray">{time}</p>;
