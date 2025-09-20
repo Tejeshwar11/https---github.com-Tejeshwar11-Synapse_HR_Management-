@@ -67,14 +67,14 @@ const generateEmployees = (count: number): Employee[] => {
       usualPunchOut: '18:30',
       leaveBalance: Math.floor(Math.random() * 15) + 1,
       halfDays: Math.floor(Math.random() * 4),
-      attendance: generateAttendance(3 * 365), // 3 years of data
+      attendance: generateAttendance(365), // 1 year of data
       requests: [],
     });
   }
   return employees;
 };
 
-export const mockEmployees: Employee[] = generateEmployees(500);
+export const mockEmployees: Employee[] = generateEmployees(50);
 
 export const mockLeaveRequests: LeaveRequest[] = [
     {
