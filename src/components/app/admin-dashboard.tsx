@@ -74,11 +74,12 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
      return depts.map(dept => {
         const deptEmployees = employees.filter(e => e.department === dept);
         const total = deptEmployees.length;
+        if (total === 0) return null;
         const present = deptEmployees.filter(e => e.attendance.find(a => a.date === format(new Date(), 'yyyy-MM-dd'))?.status === 'present').length;
         const onLeave = deptEmployees.filter(e => e.attendance.find(a => a.date === format(new Date(), 'yyyy-MM-dd'))?.status === 'on-leave').length;
         const absent = total - present - onLeave;
         return { name: dept, total, present, onLeave, absent };
-     }).filter(d => d.total > 0);
+     }).filter(Boolean);
   }, [employees]);
 
 
@@ -158,10 +159,10 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
                   <CardTitle>Today's Attendance by Department</CardTitle>
                   <CardDescription>A snapshot of who's in, out, and on leave across the company.</CardDescription>
               </CardHeader>
-              <CardContent className="h-[350px] w-full">
+              <CardContent className="h-[400px] w-full">
                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsBarChart data={departmentStats} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                      <XAxis dataKey="name" fontSize={10} tickLine={false} axisLine={false} angle={-30} textAnchor="end" height={80}/>
+                    <RechartsBarChart data={departmentStats} margin={{ top: 20, right: 30, left: 0, bottom: 80 }}>
+                      <XAxis dataKey="name" fontSize={10} tickLine={false} axisLine={false} angle={-45} textAnchor="end" interval={0} />
                       <YAxis fontSize={12} tickLine={false} axisLine={false} />
                       <Tooltip 
                         contentStyle={{
@@ -172,9 +173,10 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
                         cursor={{fill: "hsl(var(--muted))"}}
                       />
                       <Legend iconSize={10} wrapperStyle={{paddingTop: '20px'}}/>
-                      <Bar dataKey="present" stackId="a" fill="hsl(var(--success))" name="Present" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="onLeave" stackId="a" fill="hsl(var(--primary))" name="On Leave"/>
-                      <Bar dataKey="absent" stackId="a" fill="hsl(var(--destructive))" name="Absent" />
+                      <Bar dataKey="total" stackId="a" fill="hsl(var(--muted))" name="Total Employees" />
+                      <Bar dataKey="present" stackId="b" fill="hsl(var(--success))" name="Present" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="onLeave" stackId="b" fill="hsl(var(--primary))" name="On Leave"/>
+                      <Bar dataKey="absent" stackId="b" fill="hsl(var(--destructive))" name="Absent" radius={[4, 4, 0, 0]} />
                     </RechartsBarChart>
                   </ResponsiveContainer>
               </CardContent>

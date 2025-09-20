@@ -1,9 +1,3 @@
-
-
-
-
-
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -66,11 +60,16 @@ function LiveClock() {
   const [time, setTime] = useState<Date | null>(null);
 
   useEffect(() => {
+    // Set initial time on client mount
     setTime(new Date());
+    // Update time every second
     const timerId = setInterval(() => setTime(new Date()), 1000);
+    // Cleanup interval on component unmount
     return () => clearInterval(timerId);
-  }, []);
+  }, []); // Empty dependency array ensures this runs only once on mount
 
+  // On initial render (and on server), time will be null.
+  // We'll show a placeholder to prevent hydration mismatch.
   const displayTime = time ? format(time, "HH:mm:ss") : "--:--:--";
 
   return (
@@ -350,8 +349,10 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
                 <CardDescription>Your complete attendance record for the last 3 years.</CardDescription>
             </CardHeader>
             <CardContent>
-                <ScrollArea className="h-[600px] w-full p-4 border rounded-lg">
-                    <AttendanceCalendar attendance={employee.attendance} months={36} />
+                <ScrollArea className="w-full pb-4">
+                    <div className="w-[3600px] p-4">
+                      <AttendanceCalendar attendance={employee.attendance} months={36} />
+                    </div>
                 </ScrollArea>
             </CardContent>
           </Card>
