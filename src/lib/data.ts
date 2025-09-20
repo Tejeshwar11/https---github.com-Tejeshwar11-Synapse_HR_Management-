@@ -43,12 +43,13 @@ const seededRandom = (seed: number) => {
     return x - Math.floor(x);
 };
 
-// Generate attendance for the last 90 days
+// Generate attendance for the last 90 days, including today.
 const generateAttendanceHistory = (employeeId: string): AttendanceRecord[] => {
     const history: AttendanceRecord[] = [];
     const today = new Date();
     const seed = parseInt(employeeId, 10);
     
+    // Loop from 0 (today) to 89 (89 days ago)
     for (let i = 0; i < 90; i++) {
         const date = subDays(today, i);
         const dayOfWeek = date.getDay();
@@ -132,6 +133,8 @@ for (const dept in deptCounts) {
         const attendance = generateAttendanceHistory(id);
         const requests = generateLeaveRequests(id, attendance);
         const usedLeave = requests.filter(r => r.status === 'Approved').length;
+        
+        const todaysAttendance = attendance.find(a => a.date === format(new Date(), 'yyyy-MM-dd'));
 
         allEmployees.push({
             id,
@@ -152,7 +155,7 @@ for (const dept in deptCounts) {
                 contributingFactors: [...new Set(Array.from({ length: Math.floor(seededRandom(seed+8) * 3) + 1 }, () => FLIGHT_RISK_FACTORS[Math.floor(seededRandom(Date.now() + Math.random()) * FLIGHT_RISK_FACTORS.length)]))],
             } : undefined,
             presence: {
-                status: 'In Office',
+                status: todaysAttendance?.status === 'on-leave' ? 'On Leave' : 'In Office',
                 location: 'Engineering Wing'
             },
             analytics: {
