@@ -66,8 +66,8 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
   };
   
   const pendingRequests = requests.filter(r => r.status === 'pending');
-  const presentToday = employees.filter(e => e.attendance[0]?.status === 'present').length;
-  const onLeaveToday = employees.filter(e => e.attendance[0]?.status === 'on-leave').length;
+  const presentToday = employees.filter(e => e.attendance?.[0]?.status === 'present').length;
+  const onLeaveToday = employees.filter(e => e.attendance?.[0]?.status === 'on-leave').length;
 
   const departmentStats = useMemo(() => {
      const depts = departmentList;
@@ -75,8 +75,8 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
         const deptEmployees = employees.filter(e => e.department === dept);
         const total = deptEmployees.length;
         if (total === 0) return { name: dept, total: 0, present: 0, onLeave: 0, absent: 0 };
-        const present = deptEmployees.filter(e => e.attendance.find(a => a.date === format(new Date(), 'yyyy-MM-dd'))?.status === 'present').length;
-        const onLeave = deptEmployees.filter(e => e.attendance.find(a => a.date === format(new Date(), 'yyyy-MM-dd'))?.status === 'on-leave').length;
+        const present = deptEmployees.filter(e => e.attendance?.find(a => a.date === format(new Date(), 'yyyy-MM-dd'))?.status === 'present').length;
+        const onLeave = deptEmployees.filter(e => e.attendance?.find(a => a.date === format(new Date(), 'yyyy-MM-dd'))?.status === 'on-leave').length;
         const absent = total - present - onLeave;
         return { name: dept, total, present, onLeave, absent };
      }).filter(Boolean);
@@ -288,18 +288,18 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
                            <div className="flex items-center gap-2">
                             <Badge 
                                 variant={
-                                    emp.attendance[0]?.status === 'present' ? 'default'
-                                    : emp.attendance[0]?.status === 'on-leave' ? 'outline'
-                                    : emp.attendance[0]?.status === 'absent' ? 'destructive'
+                                    emp.attendance?.[0]?.status === 'present' ? 'default'
+                                    : emp.attendance?.[0]?.status === 'on-leave' ? 'outline'
+                                    : emp.attendance?.[0]?.status === 'absent' ? 'destructive'
                                     : 'secondary'
                                 }
                                 className={
-                                    emp.attendance[0]?.status === 'present' ? 'bg-success' : ''
+                                    emp.attendance?.[0]?.status === 'present' ? 'bg-success' : ''
                                 }
                             >
-                                {emp.attendance[0]?.status === 'present' ? 'Present' 
-                                 : emp.attendance[0]?.status === 'on-leave' ? 'On Leave' 
-                                 : emp.attendance[0]?.status === 'absent' ? 'Absent'
+                                {emp.attendance?.[0]?.status === 'present' ? 'Present' 
+                                 : emp.attendance?.[0]?.status === 'on-leave' ? 'On Leave' 
+                                 : emp.attendance?.[0]?.status === 'absent' ? 'Absent'
                                  : 'N/A'}
                             </Badge>
                           </div>
