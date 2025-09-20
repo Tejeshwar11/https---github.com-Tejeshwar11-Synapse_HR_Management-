@@ -5,7 +5,7 @@ import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, T
 
 import type { HrAdmin, Employee } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AppSidebar } from "./app-sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import Link from "next/link";
@@ -137,9 +137,10 @@ export function HrDashboard({ user, data }: HrDashboardProps) {
        <Card className="fixed bottom-0 right-6 w-96 h-[400px] rounded-t-xl shadow-lg flex flex-col">
             <CardHeader>
                 <CardTitle>Synapse Strategic Assistant</CardTitle>
+                 <CardDescription>Get instant insights and actionable plans.</CardDescription>
             </CardHeader>
-            <CardContent className="flex-1">
-                {/* Chatbot UI Placeholder */}
+            <CardContent className="flex-1 flex items-center justify-center text-slate-gray text-sm">
+                <p>Chatbot interface coming soon.</p>
             </CardContent>
         </Card>
     </div>
