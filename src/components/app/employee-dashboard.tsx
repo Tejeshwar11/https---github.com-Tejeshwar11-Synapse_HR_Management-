@@ -3,6 +3,7 @@
 
 
 
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -65,9 +66,9 @@ function LiveClock() {
   const [time, setTime] = useState<Date | null>(null);
 
   useEffect(() => {
-    setTime(new Date()); // Set initial time on mount
+    setTime(new Date());
     const timerId = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timerId); // Cleanup timer on unmount
+    return () => clearInterval(timerId);
   }, []);
 
   const displayTime = time ? format(time, "HH:mm:ss") : "--:--:--";
