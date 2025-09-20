@@ -7,7 +7,11 @@ import { Building, Users, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export function AppHeader() {
+interface AppHeaderProps {
+  userRole: 'employee' | 'admin';
+}
+
+export function AppHeader({ userRole }: AppHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -38,40 +42,42 @@ export function AppHeader() {
             AttendanceZen
           </Link>
           <div className="flex items-center gap-4">
-            <nav className="hidden md:flex items-center gap-2 bg-muted p-1 rounded-full">
-                <Button
-                asChild
-                variant="ghost"
-                className={cn(
-                    "font-semibold rounded-full", 
-                    pathname === "/employee" 
-                    ? "bg-background shadow-sm text-foreground" 
-                    : "text-muted-foreground"
-                )}
-                size="sm"
-                >
-                <Link href="/employee">
-                    <Users className="h-4 w-4 mr-2" />
-                    Employee
-                </Link>
-                </Button>
-                <Button
-                asChild
-                variant="ghost"
-                className={cn(
-                    "font-semibold rounded-full", 
-                    pathname === "/admin" 
-                    ? "bg-background shadow-sm text-foreground" 
-                    : "text-muted-foreground"
-                )}
-                size="sm"
-                >
-                <Link href="/admin">
-                    <Building className="h-4 w-4 mr-2" />
-                    HR Admin
-                </Link>
-                </Button>
-            </nav>
+             {userRole === 'admin' && (
+                <nav className="hidden md:flex items-center gap-2 bg-muted p-1 rounded-full">
+                    <Button
+                    asChild
+                    variant="ghost"
+                    className={cn(
+                        "font-semibold rounded-full", 
+                        pathname.startsWith("/employee")
+                        ? "bg-background shadow-sm text-foreground" 
+                        : "text-muted-foreground"
+                    )}
+                    size="sm"
+                    >
+                    <Link href="/employee">
+                        <Users className="h-4 w-4 mr-2" />
+                        Employee
+                    </Link>
+                    </Button>
+                    <Button
+                    asChild
+                    variant="ghost"
+                    className={cn(
+                        "font-semibold rounded-full", 
+                        pathname.startsWith("/admin")
+                        ? "bg-background shadow-sm text-foreground" 
+                        : "text-muted-foreground"
+                    )}
+                    size="sm"
+                    >
+                    <Link href="/admin">
+                        <Building className="h-4 w-4 mr-2" />
+                        HR Admin
+                    </Link>
+                    </Button>
+                </nav>
+            )}
             <Button variant="outline" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2"/>
                 Logout

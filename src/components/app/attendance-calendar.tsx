@@ -8,9 +8,10 @@ import { parseISO } from "date-fns";
 
 interface AttendanceCalendarProps {
   attendance: AttendanceRecord[];
+  months?: number;
 }
 
-export function AttendanceCalendar({ attendance }: AttendanceCalendarProps) {
+export function AttendanceCalendar({ attendance, months = 1 }: AttendanceCalendarProps) {
   const presentDays: Matcher[] = attendance
     .filter((a) => a.status === 'present')
     .map((a) => parseISO(a.date));
@@ -36,8 +37,15 @@ export function AttendanceCalendar({ attendance }: AttendanceCalendarProps) {
         .day-onLeave { background-color: hsl(var(--primary) / 0.8); color: hsl(var(--primary-foreground)); }
         .day-present, .day-absent, .day-halfDay, .day-onLeave { border-radius: var(--radius); }
         .rdp-day_today:not(.rdp-day_outside) { font-weight: bold; border: 2px solid hsl(var(--primary)); border-radius: var(--radius); }
+        .rdp { --rdp-cell-size: 40px; border-spacing: 2px; }
+        .rdp-day { border: 1px solid transparent; }
+        .rdp-table { border-collapse: separate; }
+        .rdp-head_cell { font-weight: 500; }
+        .rdp-caption_label { font-size: 1.1rem; font-weight: 600; }
+        .rdp-nav_button { border-radius: var(--radius); }
       `}</style>
       <DayPicker
+        numberOfMonths={months}
         mode="single"
         modifiers={{ 
           present: presentDays, 

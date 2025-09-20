@@ -27,6 +27,7 @@ export type Employee = {
   id: string;
   name: string;
   avatarUrl: string;
+  email: string;
   department: string;
   usualPunchIn: string; // HH:mm
   usualPunchOut: string; // HH:mm

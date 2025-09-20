@@ -31,9 +31,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { DEPARTMENTS as departmentList } from "@/lib/data";
 
 
 interface AdminDashboardProps {
@@ -41,7 +41,7 @@ interface AdminDashboardProps {
   requests: LeaveRequest[];
 }
 
-const DEPARTMENTS = ['All', 'Engineering', 'Marketing', 'Sales', 'Finance', 'Logistics', 'Human Resources', 'Design'];
+const DEPARTMENTS = ['All', ...departmentList];
 
 export function AdminDashboard({ employees, requests: initialRequests }: AdminDashboardProps) {
   const [requests, setRequests] = useState<LeaveRequest[]>(initialRequests);
@@ -67,16 +67,18 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
   
   const pendingRequests = requests.filter(r => r.status === 'pending');
   const presentToday = employees.filter(e => e.attendance[0]?.status === 'present').length;
+  const onLeaveToday = employees.filter(e => e.attendance[0]?.status === 'on-leave').length;
 
   const departmentStats = useMemo(() => {
-     const depts = DEPARTMENTS.filter(d => d !== 'All');
+     const depts = departmentList;
      return depts.map(dept => {
         const deptEmployees = employees.filter(e => e.department === dept);
         const total = deptEmployees.length;
-        const present = deptEmployees.filter(e => e.attendance[0]?.status === 'present').length;
-        const onLeave = deptEmployees.filter(e => e.attendance[0]?.status === 'on-leave').length;
-        return { name: dept, total, present, onLeave, absent: total - present - onLeave };
-     });
+        const present = deptEmployees.filter(e => e.attendance.find(a => a.date === format(new Date(), 'yyyy-MM-dd'))?.status === 'present').length;
+        const onLeave = deptEmployees.filter(e => e.attendance.find(a => a.date === format(new Date(), 'yyyy-MM-dd'))?.status === 'on-leave').length;
+        const absent = total - present - onLeave;
+        return { name: dept, total, present, onLeave, absent };
+     }).filter(d => d.total > 0);
   }, [employees]);
 
 
@@ -138,7 +140,7 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
             <Building className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{employees.filter(e => e.attendance[0]?.status === 'on-leave').length}</div>
+            <div className="text-2xl font-bold">{onLeaveToday}</div>
             <p className="text-xs text-muted-foreground">Employees on approved leave</p>
           </CardContent>
         </Card>
@@ -159,7 +161,7 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
               <CardContent className="h-[350px] w-full">
                  <ResponsiveContainer width="100%" height="100%">
                     <RechartsBarChart data={departmentStats} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                      <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
+                      <XAxis dataKey="name" fontSize={10} tickLine={false} axisLine={false} angle={-30} textAnchor="end" height={80}/>
                       <YAxis fontSize={12} tickLine={false} axisLine={false} />
                       <Tooltip 
                         contentStyle={{
@@ -258,7 +260,8 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
                     <TableHead className="w-[250px]">Name</TableHead>
                     <TableHead>Department</TableHead>
                     <TableHead>Leave Balance</TableHead>
-                    <TableHead>Status</TableHead>
+                     <TableHead>Contact</TableHead>
+                    <TableHead>Today's Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -278,10 +281,25 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
                         </TableCell>
                         <TableCell>{emp.department}</TableCell>
                         <TableCell>{emp.leaveBalance} days</TableCell>
+                         <TableCell className="text-xs text-muted-foreground">{emp.email}</TableCell>
                         <TableCell>
                            <div className="flex items-center gap-2">
-                            <Badge variant={emp.attendance[0]?.status === 'present' ? 'default' : 'secondary'} className={emp.attendance[0]?.status === 'present' ? 'bg-success' : 'bg-gray-400'}>
-                                {emp.attendance[0]?.status === 'present' ? 'Present' : 'Absent'}
+                            <Badge 
+                              variant={
+                                emp.attendance[0]?.status === 'present' ? 'default' :
+                                emp.attendance[0]?.status === 'on-leave' ? 'outline' :
+                                'secondary'
+                              } 
+                              className={
+                                emp.attendance[0]?.status === 'present' ? 'bg-success' :
+                                emp.attendance[0]?.status === 'on-leave' ? 'border-primary text-primary' :
+                                emp.attendance[0]?.status === 'absent' ? 'bg-destructive' :
+                                'bg-gray-400'
+                              }>
+                                {emp.attendance[0]?.status === 'present' ? 'Present' : 
+                                 emp.attendance[0]?.status === 'on-leave' ? 'On Leave' : 
+                                 emp.attendance[0]?.status === 'absent' ? 'Absent' :
+                                 'N/A'}
                             </Badge>
                           </div>
                         </TableCell>

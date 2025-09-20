@@ -1,10 +1,9 @@
-
-
 "use client";
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import {
+  BarChart,
   CalendarDays,
   Clock,
   Loader2,
@@ -18,7 +17,7 @@ import { format, parseISO } from "date-fns";
 
 import type { Employee, LeaveRequest } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useWifi } from "@/lib/hooks/use-wifi";
 import { AttendanceCalendar } from "./attendance-calendar";
 import { LeaveRequestDialog } from "./leave-request-dialog";
@@ -47,6 +46,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface EmployeeDashboardProps {
   employee: Employee;
@@ -54,13 +55,19 @@ interface EmployeeDashboardProps {
 
 function LiveClock() {
   const [currentTime, setCurrentTime] = useState("--:--:--");
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     const timer = setInterval(() => {
       setCurrentTime(format(new Date(), "HH:mm:ss"));
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  if (!isClient) {
+     return <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">--:--:--</div>
+  }
 
   return (
       <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">
@@ -75,11 +82,6 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
   const { isConnected, disconnectCount, simulateDisconnect } = useWifi();
   const { toast } = useToast();
   const [isAiLoading, setIsAiLoading] = useState(false);
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   useEffect(() => {
     if (disconnectCount > 2) {
@@ -88,7 +90,6 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
         title: "Auto Half-Day Marked",
         description: "You have disconnected from the office Wi-Fi more than twice.",
       });
-      // In a real app, this would update the employee's attendance record
     }
   }, [disconnectCount, toast]);
 
@@ -126,7 +127,7 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
         employeeId: employee.id,
         employeeRole: employee.department, // Using department as a proxy for role
         missedPunchTime: now.toISOString(),
-        usualPunchTime: new Date().toISOString(), // In real app, you would have logic to determine this
+        usualPunchTime: new Date(now.setHours(9, 30, 0, 0)).toISOString(),
         dayOfWeek: format(now, 'EEEE'),
         recentLeave: employee.attendance.some(a => a.status === 'on-leave' && parseISO(a.date) > new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)),
       };
@@ -175,7 +176,7 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
           </div>
 
           <div className="flex flex-col items-center gap-4 w-full md:w-auto">
-            {isClient ? <LiveClock /> : <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">--:--:--</div>}
+            <LiveClock />
             <div className="flex gap-2 w-full">
               <Button onClick={handlePunchToggle} className="w-full" disabled={!isConnected}>
                 {isPunchedIn ? <LogOut className="mr-2" /> : <LogIn className="mr-2" />}
@@ -212,7 +213,7 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Leave Balance</CardTitle>
@@ -233,6 +234,16 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
             <p className="text-xs text-muted-foreground">This quarter</p>
           </CardContent>
         </Card>
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Attendance Rate</CardTitle>
+                <BarChart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">98.5%</div>
+                <p className="text-xs text-muted-foreground">For the current month</p>
+            </CardContent>
+        </Card>
         <Card className="bg-primary/10 border-primary/50 flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-primary">Missed a Punch?</CardTitle>
@@ -248,60 +259,84 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Activity</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-8 lg:grid-cols-2">
-          <div>
-            <h3 className="font-semibold mb-4 text-lg">Attendance History</h3>
-            <div className="p-4 border rounded-lg bg-card">
-                <AttendanceCalendar attendance={employee.attendance} />
-            </div>
-          </div>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-                 <h3 className="font-semibold text-lg">Leave & Regularization Requests</h3>
-                 <LeaveRequestDialog onNewRequest={handleNewRequest} />
-            </div>
-            <div className="border rounded-lg max-h-[300px] overflow-y-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Dates</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {employee.requests.length > 0 ? (
-                    employee.requests.map((req) => (
-                      <TableRow key={req.id}>
-                        <TableCell className="font-medium">
-                          {format(parseISO(req.startDate), "MMM d")}
-                          {req.startDate !== req.endDate && ` - ${format(parseISO(req.endDate), "MMM d")}`}
-                        </TableCell>
-                        <TableCell className="capitalize">{req.type}</TableCell>
-                        <TableCell>
-                           <Badge variant={req.status === 'approved' ? 'default' : req.status === 'rejected' ? 'destructive' : 'secondary'} className={req.status === 'approved' ? 'bg-success hover:bg-success/90' : ''}>
-                            {req.status}
-                           </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
-                        No requests found.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+       <Tabs defaultValue="activity" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="activity">Your Activity</TabsTrigger>
+          <TabsTrigger value="history">Full Attendance History</TabsTrigger>
+        </TabsList>
+        <TabsContent value="activity">
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Activity</CardTitle>
+                 <CardDescription>A summary of your attendance for the current month and your recent requests.</CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-8 lg:grid-cols-2">
+                <div>
+                  <h3 className="font-semibold mb-4 text-lg">This Month's Calendar</h3>
+                  <div className="p-4 border rounded-lg bg-card">
+                      <AttendanceCalendar attendance={employee.attendance} />
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                       <h3 className="font-semibold text-lg">Leave & Regularization Requests</h3>
+                       <LeaveRequestDialog onNewRequest={handleNewRequest} />
+                  </div>
+                  <div className="border rounded-lg">
+                   <ScrollArea className="h-[300px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Dates</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {employee.requests.length > 0 ? (
+                          employee.requests.map((req) => (
+                            <TableRow key={req.id}>
+                              <TableCell className="font-medium">
+                                {format(parseISO(req.startDate), "MMM d")}
+                                {req.startDate !== req.endDate && ` - ${format(parseISO(req.endDate), "MMM d")}`}
+                              </TableCell>
+                              <TableCell className="capitalize">{req.type}</TableCell>
+                              <TableCell>
+                                 <Badge variant={req.status === 'approved' ? 'default' : req.status === 'rejected' ? 'destructive' : 'secondary'} className={req.status === 'approved' ? 'bg-success hover:bg-success/90' : ''}>
+                                  {req.status}
+                                 </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
+                              No requests found.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                   </ScrollArea>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+        </TabsContent>
+        <TabsContent value="history">
+          <Card>
+            <CardHeader>
+                <CardTitle>Full Attendance History</CardTitle>
+                <CardDescription>Your complete attendance record for the last 3 years.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ScrollArea className="h-[600px] w-full p-4 border rounded-lg">
+                    <AttendanceCalendar attendance={employee.attendance} months={36} />
+                </ScrollArea>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
