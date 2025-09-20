@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -61,18 +62,22 @@ function LiveClock() {
   const [time, setTime] = useState<Date | null>(null);
 
   useEffect(() => {
-    // This effect runs only on the client
-    setTime(new Date()); // Set initial time
+    // This effect runs only on the client, ensuring no hydration mismatch.
+    setTime(new Date()); // Set initial time on mount
     const timerId = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timerId);
-  }, []);
+    return () => clearInterval(timerId); // Cleanup timer on unmount
+  }, []); // Empty dependency array means this effect runs only once on mount
+
+  // Render a placeholder on the server and initial client render
+  const displayTime = time ? format(time, "HH:mm:ss") : "--:--:--";
 
   return (
     <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">
-      {time ? format(time, "HH:mm:ss") : "--:--:--"}
+      {displayTime}
     </div>
   );
 }
+
 
 export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboardProps) {
   const [employee, setEmployee] = useState(initialEmployee);
