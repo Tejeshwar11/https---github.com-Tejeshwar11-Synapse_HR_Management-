@@ -2,6 +2,7 @@
 
 
 
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -64,13 +65,11 @@ function LiveClock() {
   const [time, setTime] = useState<Date | null>(null);
 
   useEffect(() => {
-    // This effect runs only on the client, ensuring no hydration mismatch.
     setTime(new Date()); // Set initial time on mount
     const timerId = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timerId); // Cleanup timer on unmount
-  }, []); // Empty dependency array means this effect runs only once on mount
+  }, []);
 
-  // Render a placeholder on the server and initial client render
   const displayTime = time ? format(time, "HH:mm:ss") : "--:--:--";
 
   return (
