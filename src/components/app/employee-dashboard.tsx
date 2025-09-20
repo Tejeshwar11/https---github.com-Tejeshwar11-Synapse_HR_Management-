@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -63,7 +62,6 @@ function LiveClock() {
   
     useEffect(() => {
       // This effect runs only on the client
-      setTime(new Date());
       const timerId = setInterval(() => setTime(new Date()), 1000);
       return () => clearInterval(timerId);
     }, []);
@@ -82,7 +80,7 @@ function LiveClock() {
         {format(time, "HH:mm:ss")}
       </div>
     );
-  }
+}
 
 export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboardProps) {
   const [employee, setEmployee] = useState(initialEmployee);
@@ -189,8 +187,7 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
           </div>
 
           <div className="flex flex-col items-center gap-4 w-full md:w-auto">
-            {isClient && <LiveClock />}
-            {!isClient && <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">--:--:--</div>}
+            {isClient ? <LiveClock /> : <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">--:--:--</div>}
             <div className="flex gap-2 w-full">
               <Button onClick={handlePunchToggle} className="w-full" disabled={!isConnected}>
                 {isPunchedIn ? <LogOut className="mr-2" /> : <LogIn className="mr-2" />}
@@ -372,5 +369,3 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
     </div>
   );
 }
-
-    
