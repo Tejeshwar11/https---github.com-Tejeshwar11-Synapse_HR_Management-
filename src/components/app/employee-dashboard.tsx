@@ -12,6 +12,7 @@ import {
   RadialBarChart,
   ResponsiveContainer,
 } from "recharts";
+import { format, parseISO } from 'date-fns';
 
 import type { Employee, LeaveRequest } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -30,11 +31,6 @@ import { LeaveRequestDialog } from "./leave-request-dialog";
 import { EmployeeChatbot } from "./employee-chatbot";
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
 
-
-interface EmployeeDashboardProps {
-  employee: Employee;
-}
-
 const LiveClock = () => {
   const [time, setTime] = useState(new Date().toLocaleTimeString());
   const [isClient, setIsClient] = useState(false);
@@ -50,9 +46,17 @@ const LiveClock = () => {
     };
   }, []);
 
-  return <p className="font-mono text-sm text-slate-gray">{isClient ? time : '--:--:--'}</p>;
+  if (!isClient) {
+    return <p className="font-mono text-sm text-slate-gray">--:--:--</p>;
+  }
+
+  return <p className="font-mono text-sm text-slate-gray">{time}</p>;
 };
 
+
+interface EmployeeDashboardProps {
+  employee: Employee;
+}
 
 export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboardProps) {
   const [employee, setEmployee] = useState(initialEmployee);
@@ -62,7 +66,6 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
         ...newRequest,
         id: `req-${Date.now()}`,
         status: 'Pending' as const,
-        // These fields are just for the local state update. A real backend would handle this.
         employeeId: employee.id,
         employeeName: employee.name,
         employeeAvatar: employee.avatarUrl,
@@ -176,10 +179,10 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {employee.requests.map((req) => (
+                            {employee.requests.slice(0, 5).map((req) => (
                                 <TableRow key={req.id}>
                                     <TableCell className="font-medium capitalize">{req.type}</TableCell>
-                                    <TableCell>{req.startDate} - {req.endDate}</TableCell>
+                                    <TableCell>{format(parseISO(req.startDate), 'd MMM')} - {format(parseISO(req.endDate), 'd MMM')}</TableCell>
                                     <TableCell>{req.reason}</TableCell>
                                     <TableCell className="text-right">
                                         <Badge variant={

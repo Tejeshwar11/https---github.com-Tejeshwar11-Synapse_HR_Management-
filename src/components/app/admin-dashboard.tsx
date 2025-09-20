@@ -53,7 +53,7 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
     return employees.filter(e => e.department === selectedDept);
   }, [employees, selectedDept]);
 
-  const handleRequestAction = (requestId: string, status: "approved" | "rejected") => {
+  const handleRequestAction = (requestId: string, status: "Approved" | "Rejected") => {
     setRequests(currentRequests =>
       currentRequests.map(req =>
         req.id === requestId ? { ...req, status } : req
@@ -65,18 +65,20 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
     });
   };
   
-  const pendingRequests = requests.filter(r => r.status === 'pending');
-  const presentToday = employees.filter(e => e.attendance?.[0]?.status === 'present').length;
-  const onLeaveToday = employees.filter(e => e.attendance?.[0]?.status === 'on-leave').length;
+  const pendingRequests = requests.filter(r => r.status === 'Pending');
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const presentToday = employees.filter(e => e.attendance?.find(a => a.date === todayStr)?.status === 'present').length;
+  const onLeaveToday = employees.filter(e => e.attendance?.find(a => a.date === todayStr)?.status === 'on-leave').length;
 
   const departmentStats = useMemo(() => {
      const depts = departmentList;
+     const today = format(new Date(), 'yyyy-MM-dd');
      return depts.map(dept => {
         const deptEmployees = employees.filter(e => e.department === dept);
         const total = deptEmployees.length;
         if (total === 0) return { name: dept, total: 0, present: 0, onLeave: 0, absent: 0 };
-        const present = deptEmployees.filter(e => e.attendance?.find(a => a.date === format(new Date(), 'yyyy-MM-dd'))?.status === 'present').length;
-        const onLeave = deptEmployees.filter(e => e.attendance?.find(a => a.date === format(new Date(), 'yyyy-MM-dd'))?.status === 'on-leave').length;
+        const present = deptEmployees.filter(e => e.attendance?.find(a => a.date === today)?.status === 'present').length;
+        const onLeave = deptEmployees.filter(e => e.attendance?.find(a => a.date === today)?.status === 'on-leave').length;
         const absent = total - present - onLeave;
         return { name: dept, total, present, onLeave, absent };
      }).filter(Boolean);
@@ -132,7 +134,7 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{presentToday} / {employees.length}</div>
-            <p className="text-xs text-muted-foreground">{((presentToday / employees.length) * 100).toFixed(0)}% attendance rate</p>
+            <p className="text-xs text-muted-foreground">{employees.length > 0 ? ((presentToday / employees.length) * 100).toFixed(0) : 0}% attendance rate</p>
           </CardContent>
         </Card>
         <Card>
@@ -209,7 +211,7 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
                           <div className="flex items-center gap-3">
                             <Avatar className="h-9 w-9">
                                <AvatarImage src={req.employeeAvatar} alt={req.employeeName} data-ai-hint="person portrait" />
-                               <AvatarFallback>{req.employeeName.charAt(0)}</AvatarFallback>
+                               <AvatarFallback>{req.employeeName ? req.employeeName.charAt(0) : '?'}</AvatarFallback>
                             </Avatar>
                             <div>
                                 <p className="font-medium">{req.employeeName}</p>
@@ -225,10 +227,10 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
                         <TableCell className="hidden md:table-cell max-w-xs truncate">{req.reason}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-2 justify-end">
-                            <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => handleRequestAction(req.id, 'approved')}>
+                            <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => handleRequestAction(req.id, 'Approved')}>
                               <Check className="h-4 w-4 text-success" />
                             </Button>
-                            <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => handleRequestAction(req.id, 'rejected')}>
+                            <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => handleRequestAction(req.id, 'Rejected')}>
                               <X className="h-4 w-4" />
                             </Button>
                           </div>
@@ -267,7 +269,10 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredEmployees.map((emp) => (
+                  {filteredEmployees.map((emp) => {
+                    const todaysAttendance = emp.attendance?.find(a => a.date === todayStr);
+                    const status = todaysAttendance?.status || 'N/A';
+                    return (
                      <TableRow key={emp.id}>
                         <TableCell>
                            <div className="flex items-center gap-3">
@@ -282,30 +287,28 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
                            </div>
                         </TableCell>
                         <TableCell>{emp.department}</TableCell>
-                        <TableCell>{emp.leaveBalance} days</TableCell>
+                        <TableCell>{(emp.stats.leaveBalance.total - emp.stats.leaveBalance.used)} days</TableCell>
                          <TableCell className="text-xs text-muted-foreground">{emp.email}</TableCell>
                         <TableCell>
                            <div className="flex items-center gap-2">
                             <Badge 
                                 variant={
-                                    emp.attendance?.[0]?.status === 'present' ? 'default'
-                                    : emp.attendance?.[0]?.status === 'on-leave' ? 'outline'
-                                    : emp.attendance?.[0]?.status === 'absent' ? 'destructive'
+                                    status === 'present' ? 'default'
+                                    : status === 'on-leave' ? 'outline'
+                                    : status === 'absent' ? 'destructive'
                                     : 'secondary'
                                 }
                                 className={
-                                    emp.attendance?.[0]?.status === 'present' ? 'bg-success' : ''
+                                    status === 'present' ? 'bg-success' : ''
                                 }
                             >
-                                {emp.attendance?.[0]?.status === 'present' ? 'Present' 
-                                 : emp.attendance?.[0]?.status === 'on-leave' ? 'On Leave' 
-                                 : emp.attendance?.[0]?.status === 'absent' ? 'Absent'
-                                 : 'N/A'}
+                                {status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')}
                             </Badge>
                           </div>
                         </TableCell>
                       </TableRow>
-                  ))}
+                    )
+                  })}
                 </TableBody>
               </Table>
               </ScrollArea>

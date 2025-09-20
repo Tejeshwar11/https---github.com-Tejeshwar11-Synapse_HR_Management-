@@ -9,10 +9,16 @@ export type LeaveRequest = {
   endDate: string; // YYYY-MM-DD
   status: RequestStatus;
   reason?: string; // Optional reason
-  // The following fields are added when processing for the admin dashboard
   employeeId?: string;
   employeeName?: string;
   employeeAvatar?: string;
+};
+
+export type AttendanceStatus = 'present' | 'absent' | 'half-day' | 'on-leave';
+
+export type AttendanceRecord = {
+  date: string; // YYYY-MM-DD
+  status: AttendanceStatus;
 };
 
 export type Employee = {
@@ -42,10 +48,7 @@ export type Employee = {
   analytics?: {
     presenceHeatmapUrl: string;
   };
-  attendance: {
-    date: string; // YYYY-MM-DD
-    status: 'present' | 'absent' | 'half-day' | 'on-leave';
-  }[];
+  attendance: AttendanceRecord[];
 };
 
 export type HrAdmin = {
