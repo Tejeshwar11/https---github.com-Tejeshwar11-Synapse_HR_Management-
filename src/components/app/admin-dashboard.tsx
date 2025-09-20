@@ -285,21 +285,20 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
                         <TableCell>
                            <div className="flex items-center gap-2">
                             <Badge 
-                              variant={
-                                emp.attendance[0]?.status === 'present' ? 'default' :
-                                emp.attendance[0]?.status === 'on-leave' ? 'outline' :
-                                'secondary'
-                              } 
-                              className={
-                                emp.attendance[0]?.status === 'present' ? 'bg-success' :
-                                emp.attendance[0]?.status === 'on-leave' ? 'border-primary text-primary' :
-                                emp.attendance[0]?.status === 'absent' ? 'bg-destructive' :
-                                'bg-gray-400'
-                              }>
-                                {emp.attendance[0]?.status === 'present' ? 'Present' : 
-                                 emp.attendance[0]?.status === 'on-leave' ? 'On Leave' : 
-                                 emp.attendance[0]?.status === 'absent' ? 'Absent' :
-                                 'N/A'}
+                                variant={
+                                    emp.attendance[0]?.status === 'present' ? 'default'
+                                    : emp.attendance[0]?.status === 'on-leave' ? 'outline'
+                                    : emp.attendance[0]?.status === 'absent' ? 'destructive'
+                                    : 'secondary'
+                                }
+                                className={
+                                    emp.attendance[0]?.status === 'present' ? 'bg-success' : ''
+                                }
+                            >
+                                {emp.attendance[0]?.status === 'present' ? 'Present' 
+                                 : emp.attendance[0]?.status === 'on-leave' ? 'On Leave' 
+                                 : emp.attendance[0]?.status === 'absent' ? 'Absent'
+                                 : 'N/A'}
                             </Badge>
                           </div>
                         </TableCell>
