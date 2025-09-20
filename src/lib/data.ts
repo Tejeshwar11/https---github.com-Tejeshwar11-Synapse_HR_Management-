@@ -50,27 +50,23 @@ const generateAttendanceHistory = (employeeId: string): AttendanceRecord[] => {
     const today = new Date();
     const seed = parseInt(employeeId, 10);
     
-    for (let i = 0; i < 90; i++) {
+    for (let i = 89; i >= 0; i--) {
         const date = subDays(today, i);
         const dayOfWeek = date.getDay();
         
         if (dayOfWeek === 0 || dayOfWeek === 6) continue;
 
-        const random = seededRandom(seed + i);
+        const random = seededRandom(seed + date.getDate() * (date.getMonth() + 1));
         let status: AttendanceRecord['status'];
         
-        if (random < 0.85) status = 'present';
-        else if (random < 0.92) status = 'on-leave';
-        else if (random < 0.97) status = 'half-day';
+        if (random < 0.94) status = 'present';
+        else if (random < 0.98) status = 'on-leave';
+        else if (random < 0.99) status = 'half-day';
         else status = 'absent';
         
         history.push({ date: format(date, 'yyyy-MM-dd'), status });
     }
-    // Ensure today has a record
-    const todayStr = format(today, 'yyyy-MM-dd');
-    if (!history.some(h => h.date === todayStr) && today.getDay() !== 0 && today.getDay() !== 6) {
-        history.unshift({ date: todayStr, status: seededRandom(seed - 1) < 0.8 ? 'present' : 'on-leave' });
-    }
+    
     return history.sort((a, b) => b.date.localeCompare(a.date));
 };
 
