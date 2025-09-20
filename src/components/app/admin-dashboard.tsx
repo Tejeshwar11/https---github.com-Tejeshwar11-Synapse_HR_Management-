@@ -74,7 +74,7 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
      return depts.map(dept => {
         const deptEmployees = employees.filter(e => e.department === dept);
         const total = deptEmployees.length;
-        if (total === 0) return null;
+        if (total === 0) return { name: dept, total: 0, present: 0, onLeave: 0, absent: 0 };
         const present = deptEmployees.filter(e => e.attendance.find(a => a.date === format(new Date(), 'yyyy-MM-dd'))?.status === 'present').length;
         const onLeave = deptEmployees.filter(e => e.attendance.find(a => a.date === format(new Date(), 'yyyy-MM-dd'))?.status === 'on-leave').length;
         const absent = total - present - onLeave;
@@ -173,10 +173,10 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
                         cursor={{fill: "hsl(var(--muted))"}}
                       />
                       <Legend iconSize={10} wrapperStyle={{paddingTop: '20px'}}/>
-                      <Bar dataKey="total" stackId="a" fill="hsl(var(--muted))" name="Total Employees" />
-                      <Bar dataKey="present" stackId="b" fill="hsl(var(--success))" name="Present" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="onLeave" stackId="b" fill="hsl(var(--primary))" name="On Leave"/>
-                      <Bar dataKey="absent" stackId="b" fill="hsl(var(--destructive))" name="Absent" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="total" fill="hsl(var(--muted))" name="Total Employees" />
+                      <Bar dataKey="present" stackId="a" fill="hsl(var(--success))" name="Present" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="onLeave" stackId="a" fill="hsl(var(--primary))" name="On Leave"/>
+                      <Bar dataKey="absent" stackId="a" fill="hsl(var(--destructive))" name="Absent" radius={[4, 4, 0, 0]} />
                     </RechartsBarChart>
                   </ResponsiveContainer>
               </CardContent>
