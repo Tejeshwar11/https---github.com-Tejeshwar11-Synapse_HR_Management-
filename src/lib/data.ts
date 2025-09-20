@@ -1,5 +1,5 @@
 import type { Employee, LeaveRequest } from '@/lib/types';
-import { subDays, format, addDays } from 'date-fns';
+import { subDays, format, addDays, getDay } from 'date-fns';
 
 const today = new Date();
 
@@ -11,22 +11,42 @@ const generateRandomDate = (start: Date, end: Date) => {
   return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 };
 
-const generateAttendance = (numRecords: number): Employee['attendance'] => {
+const generateAttendance = (numDays: number): Employee['attendance'] => {
   const attendance: Employee['attendance'] = [];
-  for (let i = 1; i <= numRecords; i++) {
+  for (let i = 1; i <= numDays; i++) {
+    const date = subDays(today, i);
+    const dayOfWeek = getDay(date); // Sunday is 0, Saturday is 6
+
+    let status: Employee['attendance'][0]['status'];
+
+    // Mark weekends as 'on-leave' (or could be another category)
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      // Skipping weekends for a cleaner calendar view
+      continue;
+    }
+
     const statusChance = Math.random();
-    let status: Employee['attendance'][0]['status'] = 'present';
-    if (statusChance > 0.95) status = 'absent';
-    else if (statusChance > 0.9) status = 'on-leave';
-    else if (statusChance > 0.85) status = 'half-day';
+    if (statusChance > 0.98) status = 'absent'; // Lower chance of being absent
+    else if (statusChance > 0.95) status = 'on-leave';
+    else if (statusChance > 0.92) status = 'half-day';
+    else status = 'present';
+
 
     attendance.push({
-      date: format(subDays(today, i * 2), 'yyyy-MM-dd'),
+      date: format(date, 'yyyy-MM-dd'),
       status,
       punchIn: status === 'present' || status === 'half-day' ? '09:30' : undefined,
       punchOut: status === 'present' ? '18:30' : status === 'half-day' ? '14:00' : undefined,
     });
   }
+  // Add today's attendance
+  attendance.unshift({
+      date: format(today, 'yyyy-MM-dd'),
+      status: 'present',
+      punchIn: '09:25',
+      punchOut: undefined
+  });
+
   return attendance;
 };
 
@@ -47,7 +67,7 @@ const generateEmployees = (count: number): Employee[] => {
       usualPunchOut: '18:30',
       leaveBalance: Math.floor(Math.random() * 15) + 1,
       halfDays: Math.floor(Math.random() * 4),
-      attendance: generateAttendance(5),
+      attendance: generateAttendance(3 * 365), // 3 years of data
       requests: [],
     });
   }
