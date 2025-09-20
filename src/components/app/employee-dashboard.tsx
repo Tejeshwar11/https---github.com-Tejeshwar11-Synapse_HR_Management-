@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -10,6 +11,7 @@ import {
   Loader2,
   LogIn,
   LogOut,
+  MessageSquare,
   Siren,
   Wifi,
   WifiOff,
@@ -49,26 +51,38 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { EmployeeChatbot } from "./employee-chatbot";
 
 interface EmployeeDashboardProps {
   employee: Employee;
 }
 
 function LiveClock() {
-  const [time, setTime] = useState<Date | null>(null);
-
-  useEffect(() => {
-    setTime(new Date());
-    const timerId = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timerId);
-  }, []);
-
-  return (
-    <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">
-      {time ? format(time, "HH:mm:ss") : "--:--:--"}
-    </div>
-  );
-}
+    const [time, setTime] = useState<Date | null>(null);
+  
+    useEffect(() => {
+      // This effect runs only on the client
+      setTime(new Date());
+      const timerId = setInterval(() => setTime(new Date()), 1000);
+      return () => clearInterval(timerId);
+    }, []);
+  
+    // Render placeholder on server and initial client render
+    if (!time) {
+      return (
+          <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">
+              --:--:--
+          </div>
+      );
+    }
+  
+    return (
+      <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">
+        {format(time, "HH:mm:ss")}
+      </div>
+    );
+  }
 
 export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboardProps) {
   const [employee, setEmployee] = useState(initialEmployee);
@@ -76,6 +90,11 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
   const { isConnected, disconnectCount, simulateDisconnect } = useWifi();
   const { toast } = useToast();
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     if (disconnectCount > 2) {
@@ -170,7 +189,8 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
           </div>
 
           <div className="flex flex-col items-center gap-4 w-full md:w-auto">
-            <LiveClock />
+            {isClient && <LiveClock />}
+            {!isClient && <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">--:--:--</div>}
             <div className="flex gap-2 w-full">
               <Button onClick={handlePunchToggle} className="w-full" disabled={!isConnected}>
                 {isPunchedIn ? <LogOut className="mr-2" /> : <LogIn className="mr-2" />}
@@ -254,9 +274,10 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
       </div>
 
        <Tabs defaultValue="activity" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="activity">Your Activity</TabsTrigger>
           <TabsTrigger value="history">Full Attendance History</TabsTrigger>
+          <TabsTrigger value="chatbot"><MessageSquare className="mr-2 h-4 w-4"/>Ask AI</TabsTrigger>
         </TabsList>
         <TabsContent value="activity">
             <Card>
@@ -278,38 +299,52 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
                   </div>
                   <div className="border rounded-lg">
                    <ScrollArea className="h-[300px]">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Dates</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {employee.requests.length > 0 ? (
-                          employee.requests.map((req) => (
-                            <TableRow key={req.id}>
-                              <TableCell className="font-medium">
-                                {format(parseISO(req.startDate), "MMM d")}
-                                {req.startDate !== req.endDate && ` - ${format(parseISO(req.endDate), "MMM d")}`}
-                              </TableCell>
-                              <TableCell className="capitalize">{req.type}</TableCell>
-                              <TableCell>
-                                 <Badge variant={req.status === 'approved' ? 'default' : req.status === 'rejected' ? 'destructive' : 'secondary'} className={req.status === 'approved' ? 'bg-success hover:bg-success/90' : ''}>
-                                  {req.status}
-                                 </Badge>
+                    <TooltipProvider>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Dates</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Reason</TableHead>
+                            <TableHead className="text-right">Status</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {employee.requests.length > 0 ? (
+                            employee.requests.map((req) => (
+                              <TableRow key={req.id}>
+                                <TableCell className="font-medium">
+                                  {format(parseISO(req.startDate), "MMM d")}
+                                  {req.startDate !== req.endDate && ` - ${format(parseISO(req.endDate), "MMM d")}`}
+                                </TableCell>
+                                <TableCell className="capitalize">{req.type}</TableCell>
+                                <TableCell>
+                                  <Tooltip>
+                                    <TooltipTrigger className="max-w-[150px] truncate text-left">
+                                      {req.reason}
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p className="max-w-[300px]">{req.reason}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <Badge variant={req.status === 'approved' ? 'default' : req.status === 'rejected' ? 'destructive' : 'secondary'} className={req.status === 'approved' ? 'bg-success hover:bg-success/90' : ''}>
+                                    {req.status}
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                                No requests found.
                               </TableCell>
                             </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
-                              No requests found.
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TooltipProvider>
                     </Table>
                    </ScrollArea>
                   </div>
@@ -329,6 +364,9 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
                 </ScrollArea>
             </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent value="chatbot">
+            <EmployeeChatbot employee={employee} />
         </TabsContent>
       </Tabs>
     </div>
