@@ -41,6 +41,10 @@ const generateDeptEmployees = (count: number, department: string, startId: numbe
         const role = roles[Math.floor(Math.random() * roles.length)];
         const isHighRisk = Math.random() < 0.15; // 15% chance of being high risk
 
+        const attendanceStatus = ['present', 'on-leave', 'absent'];
+        const todayStatus = attendanceStatus[Math.floor(Math.random() * attendanceStatus.length)] as 'present' | 'on-leave' | 'absent';
+
+
         employees.push({
             id,
             name: `${firstName} ${lastName}`,
@@ -54,6 +58,9 @@ const generateDeptEmployees = (count: number, department: string, startId: numbe
                 collaborationIndex: parseFloat((Math.random() * 4 + 6).toFixed(1)), // 6.0 to 10.0
             },
             requests: [],
+            attendance: [
+                { date: format(new Date(), 'yyyy-MM-dd'), status: todayStatus }
+            ],
             flightRisk: isHighRisk ? {
                 score: Math.floor(Math.random() * 30) + 70, // 70-99%
                 contributingFactors: FLIGHT_RISK_FACTORS.slice(0, Math.floor(Math.random() * 3) + 1),
@@ -105,9 +112,12 @@ const priyaSharma: Employee = {
         collaborationIndex: 7.8,
     },
     requests: [
-        { id: 'req-1', type: 'leave', startDate: '2024-08-15', endDate: '2024-08-17', status: 'Approved' },
-        { id: 'req-2', type: 'regularization', startDate: '2024-07-22', endDate: '2024-07-22', status: 'Approved' },
-        { id: 'req-3', type: 'leave', startDate: '2024-09-05', endDate: '2024-09-10', status: 'Pending' },
+        { id: 'req-1', type: 'leave', startDate: '2024-08-15', endDate: '2024-08-17', status: 'Approved', reason: 'Family vacation' },
+        { id: 'req-2', type: 'regularization', startDate: '2024-07-22', endDate: '2024-07-22', status: 'Approved', reason: 'Forgot to punch in' },
+        { id: 'req-3', type: 'leave', startDate: '2024-09-05', endDate: '2024-09-10', status: 'Pending', reason: 'Conference' },
+    ],
+    attendance: [
+      { date: format(new Date(), 'yyyy-MM-dd'), status: 'present' }
     ],
     presence: {
         status: 'In Office',
@@ -131,6 +141,9 @@ const davidChen: Employee = {
         collaborationIndex: 6.8,
     },
     requests: [],
+    attendance: [
+       { date: format(new Date(), 'yyyy-MM-dd'), status: 'present' }
+    ],
     flightRisk: {
         score: 78,
         contributingFactors: [
@@ -171,9 +184,9 @@ export const mockFatimaAlJamil = fatimaAlJamil;
 // HR Dashboard specific data
 export const hrDashboardData = {
     workforcePulse: {
-        totalPresent: mockEmployees.filter(e => e.presence?.status === 'In Office').length,
+        totalPresent: mockEmployees.filter(e => e.attendance.length > 0 && e.attendance[0].status === 'present').length,
         totalWorkforce: mockEmployees.length,
-        onLeave: mockEmployees.filter(e => e.presence?.status === 'On Leave').length,
+        onLeave: mockEmployees.filter(e => e.attendance.length > 0 && e.attendance[0].status === 'on-leave').length,
         highFlightRisk: mockEmployees.filter(e => e.flightRisk && e.flightRisk.score > 70).length,
         pendingApprovals: 12,
     },
@@ -187,9 +200,11 @@ export const hrDashboardData = {
             (allEmployees
                 .filter(e => e.department === dept)
                 .reduce((acc, e) => acc + e.stats.collaborationIndex, 0) /
-            deptCounts[dept])
+            (deptCounts[dept] || 1)
+            )
             .toFixed(1)
         ),
         target: 8.5
     }))
 };
+    
