@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -53,12 +54,15 @@ interface EmployeeDashboardProps {
 export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboardProps) {
   const [employee, setEmployee] = useState(initialEmployee);
   const [isPunchedIn, setIsPunchedIn] = useState(false);
-  const [currentTime, setCurrentTime] = useState("--:--:--");
+  const [currentTime, setCurrentTime] = useState<string | null>(null);
   const { isConnected, disconnectCount, simulateDisconnect } = useWifi();
   const { toast } = useToast();
   const [isAiLoading, setIsAiLoading] = useState(false);
 
   useEffect(() => {
+    // Set initial time on client mount
+    setCurrentTime(format(new Date(), "HH:mm:ss"));
+
     const timer = setInterval(() => {
       setCurrentTime(format(new Date(), "HH:mm:ss"));
     }, 1000);
@@ -160,7 +164,7 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
 
           <div className="flex flex-col items-center gap-4 w-full md:w-auto">
             <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">
-              {currentTime}
+              {currentTime ?? "--:--:--"}
             </div>
             <div className="flex gap-2 w-full">
               <Button onClick={handlePunchToggle} className="w-full" disabled={!isConnected}>
