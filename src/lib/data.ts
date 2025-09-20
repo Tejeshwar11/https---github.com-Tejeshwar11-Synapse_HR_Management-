@@ -229,7 +229,7 @@ findAndReplace(davidChen);
 export const mockEmployees = allEmployees;
 export const mockPriyaSharma = priyaSharma;
 export const mockDavidChen = davidChen;
-export const mockFatimaAlJamil = mockFatimaAlJamil;
+export const mockFatimaAlJamil = fatimaAlJamil;
 
 const totalPendingRequests = allEmployees.reduce((acc, emp) => acc + emp.requests.filter(r => r.status === 'Pending').length, 0);
 const todayStr = format(new Date(), 'yyyy-MM-dd');
