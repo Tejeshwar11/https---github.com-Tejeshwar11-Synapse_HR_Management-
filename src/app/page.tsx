@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BrainCircuit, Bluetooth, MessageCircleStar } from 'lucide-react';
+import { BrainCircuit, Bluetooth, MessageCircleCode } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LandingPage() {
@@ -64,7 +64,7 @@ export default function LandingPage() {
                      <div className="text-center">
                         <div className="flex justify-center mb-4">
                              <div className="bg-primary/10 p-4 rounded-full">
-                                <MessageCircleStar className="h-8 w-8 text-primary" />
+                                <MessageCircleCode className="h-8 w-8 text-primary" />
                              </div>
                         </div>
                         <h3 className="text-2xl mb-2">AI Strategic Assistant</h3>
