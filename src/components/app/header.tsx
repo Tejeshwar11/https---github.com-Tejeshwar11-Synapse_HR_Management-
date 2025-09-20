@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -34,8 +35,13 @@ export function AppHeader() {
           <nav className="flex items-center gap-2 bg-muted p-1 rounded-full">
             <Button
               asChild
-              variant={pathname === "/" ? "default" : "ghost"}
-              className={cn("font-semibold rounded-full", pathname === "/" ? "bg-background shadow-sm" : "text-muted-foreground")}
+              variant="ghost"
+              className={cn(
+                "font-semibold rounded-full", 
+                pathname === "/" 
+                  ? "bg-background shadow-sm text-foreground" 
+                  : "text-muted-foreground"
+              )}
               size="sm"
             >
               <Link href="/">
@@ -45,8 +51,13 @@ export function AppHeader() {
             </Button>
             <Button
               asChild
-              variant={pathname === "/admin" ? "default" : "ghost"}
-              className={cn("font-semibold rounded-full", pathname === "/admin" ? "bg-background shadow-sm" : "text-muted-foreground")}
+              variant="ghost"
+              className={cn(
+                "font-semibold rounded-full", 
+                pathname === "/admin" 
+                  ? "bg-background shadow-sm text-foreground" 
+                  : "text-muted-foreground"
+              )}
               size="sm"
             >
               <Link href="/admin">
