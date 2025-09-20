@@ -1,3 +1,22 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "emp-avatar-001",
+      "description": "Avatar for Alex Johnson",
+      "imageUrl": "https://picsum.photos/seed/emp-001/150/150",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "emp-avatar-002",
+      "description": "Avatar for Maria Garcia",
+      "imageUrl": "https://picsum.photos/seed/emp-002/150/150",
+      "imageHint": "woman portrait"
+    },
+    {
+      "id": "emp-avatar-003",
+      "description": "Avatar for James Smith",
+      "imageUrl": "https://picsum.photos/seed/emp-003/150/150",
+      "imageHint": "man portrait"
+    }
+  ]
 }
