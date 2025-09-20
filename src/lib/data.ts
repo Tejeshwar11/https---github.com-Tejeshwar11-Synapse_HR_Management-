@@ -1,5 +1,5 @@
 import type { Employee, HrAdmin, LeaveRequest, AttendanceRecord, RequestStatus } from '@/lib/types';
-import { subDays, format, addDays } from 'date-fns';
+import { subDays, format, addDays, parseISO } from 'date-fns';
 
 // --- DATA POOLS FOR GENERATION ---
 export const DEPARTMENTS = [
@@ -182,6 +182,7 @@ const priyaSharma: Employee = {
         { id: 'req-734-2', type: 'regularization', startDate: format(subDays(new Date(), 45), 'yyyy-MM-dd'), endDate: format(subDays(new Date(), 45), 'yyyy-MM-dd'), status: 'Approved', reason: 'Forgot to punch in' },
         { id: 'req-734-3', type: 'leave', startDate: format(addDays(new Date(), 10), 'yyyy-MM-dd'), endDate: format(addDays(new Date(), 15), 'yyyy-MM-dd'), status: 'Pending', reason: 'Conference' },
     ],
+    attendance: allEmployees.find(e => e.id === '734')?.attendance || [],
 };
 
 const davidChen: Employee = {
@@ -201,6 +202,7 @@ const davidChen: Employee = {
             '↓ Below target Collaboration Index',
         ],
     },
+    attendance: allEmployees.find(e => e.id === '123')?.attendance || [],
 };
 
 const fatimaAlJamil: HrAdmin = {
@@ -227,7 +229,7 @@ findAndReplace(davidChen);
 export const mockEmployees = allEmployees;
 export const mockPriyaSharma = priyaSharma;
 export const mockDavidChen = davidChen;
-export const mockFatimaAlJamil = fatimaAlJamil;
+export const mockFatimaAlJamil = mockFatimaAlJamil;
 
 const totalPendingRequests = allEmployees.reduce((acc, emp) => acc + emp.requests.filter(r => r.status === 'Pending').length, 0);
 const todayStr = format(new Date(), 'yyyy-MM-dd');
