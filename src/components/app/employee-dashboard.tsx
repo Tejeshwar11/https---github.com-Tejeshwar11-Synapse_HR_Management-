@@ -74,12 +74,21 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
     setEmployee(currentEmployee => ({
         ...currentEmployee,
         requests: [fullRequest, ...currentEmployee.requests],
+        stats: {
+          ...currentEmployee.stats,
+          // Assuming a full day leave for simplicity
+          leaveBalance: {
+            ...currentEmployee.stats.leaveBalance,
+            used: currentEmployee.stats.leaveBalance.used + 1
+          }
+        }
     }));
   };
   
+  const remainingLeave = employee.stats.leaveBalance.total - employee.stats.leaveBalance.used;
   const leaveData = [
     { name: "Used", value: employee.stats.leaveBalance.used, fill: "hsl(var(--primary))" },
-    { name: "Remaining", value: employee.stats.leaveBalance.total - employee.stats.leaveBalance.used, fill: "hsl(var(--muted))" },
+    { name: "Remaining", value: remainingLeave, fill: "hsl(var(--muted))" },
   ];
 
   const collaborationData = [
@@ -121,7 +130,7 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
                         <CardTitle className="text-base font-semibold">Leave Balance</CardTitle>
                     </CardHeader>
                     <CardContent className="flex items-center justify-between">
-                        <div className="text-3xl font-bold text-charcoal">{employee.stats.leaveBalance.total - employee.stats.leaveBalance.used} <span className="text-lg font-medium">Days Left</span></div>
+                        <div className="text-3xl font-bold text-charcoal">{remainingLeave} <span className="text-lg font-medium">Days Left</span></div>
                          <div className="h-20 w-20">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>

@@ -67,22 +67,42 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
   
   const pendingRequests = requests.filter(r => r.status === 'Pending');
   const todayStr = format(new Date(), 'yyyy-MM-dd');
-  const presentToday = employees.filter(e => e.attendance?.find(a => a.date === todayStr)?.status === 'present').length;
-  const onLeaveToday = employees.filter(e => e.attendance?.find(a => a.date === todayStr)?.status === 'on-leave').length;
+
+  const { presentToday, onLeaveToday } = useMemo(() => {
+    let present = 0;
+    let onLeave = 0;
+    employees.forEach(e => {
+        const todaysAttendance = e.attendance?.find(a => a.date === todayStr);
+        if (todaysAttendance?.status === 'present') {
+            present++;
+        } else if (todaysAttendance?.status === 'on-leave') {
+            onLeave++;
+        }
+    });
+    return { presentToday: present, onLeaveToday: onLeave };
+  }, [employees, todayStr]);
+
 
   const departmentStats = useMemo(() => {
      const depts = departmentList;
-     const today = format(new Date(), 'yyyy-MM-dd');
      return depts.map(dept => {
         const deptEmployees = employees.filter(e => e.department === dept);
         const total = deptEmployees.length;
         if (total === 0) return { name: dept, total: 0, present: 0, onLeave: 0, absent: 0 };
-        const present = deptEmployees.filter(e => e.attendance?.find(a => a.date === today)?.status === 'present').length;
-        const onLeave = deptEmployees.filter(e => e.attendance?.find(a => a.date === today)?.status === 'on-leave').length;
+        
+        let present = 0;
+        let onLeave = 0;
+        
+        deptEmployees.forEach(e => {
+            const todaysAttendance = e.attendance?.find(a => a.date === todayStr);
+            if (todaysAttendance?.status === 'present') present++;
+            else if (todaysAttendance?.status === 'on-leave') onLeave++;
+        });
+
         const absent = total - present - onLeave;
         return { name: dept, total, present, onLeave, absent };
      }).filter(Boolean);
-  }, [employees]);
+  }, [employees, todayStr]);
 
 
   return (

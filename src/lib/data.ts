@@ -131,6 +131,7 @@ for (const dept in deptCounts) {
 
         const attendance = generateAttendanceHistory(id);
         const requests = generateLeaveRequests(id, attendance);
+        const usedLeave = requests.filter(r => r.status === 'Approved').length;
 
         allEmployees.push({
             id,
@@ -140,7 +141,7 @@ for (const dept in deptCounts) {
             avatarUrl: `https://picsum.photos/seed/${id}/150/150`,
             email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${id}@synapse.corp`,
             stats: {
-                leaveBalance: { used: Math.floor(seededRandom(seed + 4) * 8), total: 20 },
+                leaveBalance: { used: usedLeave, total: 20 },
                 perfectStreak: Math.floor(seededRandom(seed + 5) * 80),
                 collaborationIndex: parseFloat((seededRandom(seed + 6) * 4 + 6).toFixed(1)), // 6.0 to 10.0
             },
@@ -164,36 +165,38 @@ for (const dept in deptCounts) {
 
 // --- SPECIFIC MOCK USERS ---
 
+const priyaSharmaData = allEmployees.find(e => e.name.includes('Priya')) || allEmployees[0];
 const priyaSharma: Employee = {
-    ...allEmployees.find(e => e.id === '734')!, // Base on a generated employee
-    id: '734',
+    ...priyaSharmaData,
+    id: priyaSharmaData.id,
     name: 'Priya Sharma',
     role: 'Lead Fusion Engineer',
     department: 'Fusion Engineering',
-    avatarUrl: 'https://picsum.photos/seed/734/150/150',
+    avatarUrl: `https://picsum.photos/seed/${priyaSharmaData.id}/150/150`,
     email: 'priya.sharma@synapse.corp',
     stats: {
-        leaveBalance: { used: 11, total: 20 },
+        leaveBalance: { used: 5, total: 20 },
         perfectStreak: 42,
         collaborationIndex: 7.8,
     },
     requests: [
-        { id: 'req-734-1', type: 'leave', startDate: format(subDays(new Date(), 20), 'yyyy-MM-dd'), endDate: format(subDays(new Date(), 18), 'yyyy-MM-dd'), status: 'Approved', reason: 'Family vacation' },
-        { id: 'req-734-2', type: 'regularization', startDate: format(subDays(new Date(), 45), 'yyyy-MM-dd'), endDate: format(subDays(new Date(), 45), 'yyyy-MM-dd'), status: 'Approved', reason: 'Forgot to punch in' },
-        { id: 'req-734-3', type: 'leave', startDate: format(addDays(new Date(), 10), 'yyyy-MM-dd'), endDate: format(addDays(new Date(), 15), 'yyyy-MM-dd'), status: 'Pending', reason: 'Conference' },
+        { id: 'req-priya-1', type: 'leave', startDate: format(subDays(new Date(), 20), 'yyyy-MM-dd'), endDate: format(subDays(new Date(), 18), 'yyyy-MM-dd'), status: 'Approved', reason: 'Family vacation' },
+        { id: 'req-priya-2', type: 'regularization', startDate: format(subDays(new Date(), 45), 'yyyy-MM-dd'), endDate: format(subDays(new Date(), 45), 'yyyy-MM-dd'), status: 'Approved', reason: 'Forgot to punch in' },
+        { id: 'req-priya-3', type: 'leave', startDate: format(addDays(new Date(), 10), 'yyyy-MM-dd'), endDate: format(addDays(new Date(), 15), 'yyyy-MM-dd'), status: 'Pending', reason: 'Conference' },
     ],
-    attendance: allEmployees.find(e => e.id === '734')?.attendance || [],
+    attendance: priyaSharmaData.attendance,
 };
 
+const davidChenData = allEmployees.find(e => e.name.includes('David')) || allEmployees[1];
 const davidChen: Employee = {
-    ...allEmployees.find(e => e.id === '123')!,
-    id: '123',
+    ...davidChenData,
+    id: davidChenData.id,
     name: 'David Chen',
     role: 'Lead Research Scientist',
     department: 'Quantum Computing R&D',
-    avatarUrl: `https://picsum.photos/seed/123/150/150`,
+    avatarUrl: `https://picsum.photos/seed/${davidChenData.id}/150/150`,
     email: 'david.chen@synapse.corp',
-    stats: { ...allEmployees.find(e => e.id === '123')!.stats, collaborationIndex: 6.8 },
+    stats: { ...davidChenData.stats, collaborationIndex: 6.8 },
     flightRisk: {
         score: 78,
         contributingFactors: [
@@ -202,13 +205,13 @@ const davidChen: Employee = {
             '↓ Below target Collaboration Index',
         ],
     },
-    attendance: allEmployees.find(e => e.id === '123')?.attendance || [],
+    attendance: davidChenData.attendance,
 };
 
 const fatimaAlJamil: HrAdmin = {
-    id: '801',
+    id: 'hr-801',
     name: 'Fatima Al-Jamil',
-    avatarUrl: `https://picsum.photos/seed/801/150/150`,
+    avatarUrl: `https://picsum.photos/seed/hr-801/150/150`,
 };
 
 

@@ -13,7 +13,7 @@ export default function HRLoginPage() {
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
         // In a real app, you would have authentication logic here
-        router.push('/admin');
+        router.push('/hr');
     }
 
   return (
