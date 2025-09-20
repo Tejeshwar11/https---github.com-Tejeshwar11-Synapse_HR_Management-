@@ -51,22 +51,33 @@ interface EmployeeDashboardProps {
   employee: Employee;
 }
 
-export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboardProps) {
-  const [employee, setEmployee] = useState(initialEmployee);
-  const [isPunchedIn, setIsPunchedIn] = useState(false);
-  const [currentTime, setCurrentTime] = useState<string | null>(null);
-  const { isConnected, disconnectCount, simulateDisconnect } = useWifi();
-  const { toast } = useToast();
-  const [isAiLoading, setIsAiLoading] = useState(false);
+function LiveClock() {
+  const [currentTime, setCurrentTime] = useState("--:--:--");
 
   useEffect(() => {
-    // Set initial time on client mount
-    setCurrentTime(format(new Date(), "HH:mm:ss"));
-
     const timer = setInterval(() => {
       setCurrentTime(format(new Date(), "HH:mm:ss"));
     }, 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  return (
+      <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">
+          {currentTime}
+      </div>
+  );
+}
+
+export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboardProps) {
+  const [employee, setEmployee] = useState(initialEmployee);
+  const [isPunchedIn, setIsPunchedIn] = useState(false);
+  const { isConnected, disconnectCount, simulateDisconnect } = useWifi();
+  const { toast } = useToast();
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
   }, []);
 
   useEffect(() => {
@@ -163,9 +174,7 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
           </div>
 
           <div className="flex flex-col items-center gap-4 w-full md:w-auto">
-            <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">
-              {currentTime ?? "--:--:--"}
-            </div>
+            {isClient ? <LiveClock /> : <div className="text-4xl font-bold font-mono text-center bg-muted/50 dark:bg-gray-800 p-2 rounded-lg min-w-[170px]">--:--:--</div>}
             <div className="flex gap-2 w-full">
               <Button onClick={handlePunchToggle} className="w-full" disabled={!isConnected}>
                 {isPunchedIn ? <LogOut className="mr-2" /> : <LogIn className="mr-2" />}
@@ -295,3 +304,5 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
     </div>
   );
 }
+
+    
