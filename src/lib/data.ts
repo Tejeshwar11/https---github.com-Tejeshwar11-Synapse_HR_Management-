@@ -1,4 +1,3 @@
-
 import type { Employee, HrAdmin, LeaveRequest, AttendanceRecord, RequestStatus } from '@/lib/types';
 import { subDays, format, addDays, parseISO } from 'date-fns';
 
@@ -50,19 +49,21 @@ const generateAttendanceHistory = (employeeId: string): AttendanceRecord[] => {
     const today = new Date();
     const seed = parseInt(employeeId, 10);
     
+    // Generate for the last 89 days + today (total 90 days)
     for (let i = 89; i >= 0; i--) {
         const date = subDays(today, i);
         const dayOfWeek = date.getDay();
         
-        if (dayOfWeek === 0 || dayOfWeek === 6) continue;
+        if (dayOfWeek === 0 || dayOfWeek === 6) continue; // Skip weekends
 
         const random = seededRandom(seed + date.getDate() * (date.getMonth() + 1));
         let status: AttendanceRecord['status'];
         
-        if (random < 0.94) status = 'present';
-        else if (random < 0.98) status = 'on-leave';
-        else if (random < 0.99) status = 'half-day';
-        else status = 'absent';
+        // More realistic distribution
+        if (random < 0.94) status = 'present';    // 94% chance of being present
+        else if (random < 0.98) status = 'on-leave'; // 4% chance of being on leave
+        else if (random < 0.995) status = 'half-day'; // 1.5% chance of half-day
+        else status = 'absent';       // 0.5% chance of being absent
         
         history.push({ date: format(date, 'yyyy-MM-dd'), status });
     }
@@ -76,10 +77,11 @@ const generateLeaveRequests = (employeeId: string, attendance: AttendanceRecord[
     const onLeaveDays = attendance.filter(a => a.status === 'on-leave');
     const seed = parseInt(employeeId, 10);
     
-    for (let i = 0; i < onLeaveDays.length && i < 4; i++) {
-        if (seededRandom(seed + i * 10) > 0.6) {
+    for (let i = 0; i < onLeaveDays.length && i < 5; i++) {
+        // Don't create requests for all leaves to add realism
+        if (seededRandom(seed + i * 10) > 0.5) {
             const startDate = parseISO(onLeaveDays[i].date);
-            const endDate = addDays(startDate, Math.floor(seededRandom(seed + i * 20) * 3));
+            const endDate = addDays(startDate, Math.floor(seededRandom(seed + i * 20) * 3)); // 0-3 days duration
             
             const randomStatus = seededRandom(seed + i * 30);
             let status: RequestStatus;

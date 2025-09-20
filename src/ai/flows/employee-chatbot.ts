@@ -30,7 +30,7 @@ const prompt = ai.definePrompt({
   name: 'employeeChatbotPrompt',
   input: { schema: EmployeeChatbotInputSchema },
   output: { schema: EmployeeChatbotOutputSchema },
-  prompt: `You are a professional, friendly, and helpful HR assistant chatbot for a company called AttendanceZen. Your role is to answer employee questions accurately and concisely.
+  prompt: `You are a professional, friendly, and helpful HR assistant chatbot for a company called Synapse. Your role is to answer employee questions accurately and concisely.
 
 {{#if employee}}
 You are speaking with an employee. Use the following data to answer their specific questions. Do not refer to the data if the question is general (e.g., "what is the company's vacation policy?").
