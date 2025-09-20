@@ -1,19 +1,24 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Check,
   ClipboardList,
   Users,
   X,
   Clock,
-  UserCheck
+  UserCheck,
+  Building,
+  BarChart,
+  ChevronDown
 } from "lucide-react";
 import { format, parseISO } from 'date-fns';
+import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+
 
 import type { Employee, LeaveRequest } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -26,15 +31,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
 
 interface AdminDashboardProps {
   employees: Employee[];
   requests: LeaveRequest[];
 }
 
+const DEPARTMENTS = ['All', 'Engineering', 'Marketing', 'Sales', 'Finance', 'Logistics', 'Human Resources', 'Design'];
+
 export function AdminDashboard({ employees, requests: initialRequests }: AdminDashboardProps) {
   const [requests, setRequests] = useState<LeaveRequest[]>(initialRequests);
   const { toast } = useToast();
+  const [selectedDept, setSelectedDept] = useState('All');
+
+  const filteredEmployees = useMemo(() => {
+    if (selectedDept === 'All') return employees;
+    return employees.filter(e => e.department === selectedDept);
+  }, [employees, selectedDept]);
 
   const handleRequestAction = (requestId: string, status: "approved" | "rejected") => {
     setRequests(currentRequests =>
@@ -49,21 +66,50 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
   };
   
   const pendingRequests = requests.filter(r => r.status === 'pending');
-  const presentToday = 3; // Mock data
+  const presentToday = employees.filter(e => e.attendance[0]?.status === 'present').length;
+
+  const departmentStats = useMemo(() => {
+     const depts = DEPARTMENTS.filter(d => d !== 'All');
+     return depts.map(dept => {
+        const deptEmployees = employees.filter(e => e.department === dept);
+        const total = deptEmployees.length;
+        const present = deptEmployees.filter(e => e.attendance[0]?.status === 'present').length;
+        const onLeave = deptEmployees.filter(e => e.attendance[0]?.status === 'on-leave').length;
+        return { name: dept, total, present, onLeave, absent: total - present - onLeave };
+     });
+  }, [employees]);
+
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold">HR Admin Dashboard</h1>
+      <div className="flex flex-wrap justify-between items-center gap-4">
+        <h1 className="text-3xl font-bold">HR Admin Dashboard</h1>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="ml-auto min-w-[180px] justify-between">
+              {selectedDept === 'All' ? 'All Departments' : selectedDept}
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56">
+             {DEPARTMENTS.map(dept => (
+              <DropdownMenuItem key={dept} onSelect={() => setSelectedDept(dept)}>
+                {dept}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Employees</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{employees.length}</div>
-            <p className="text-xs text-muted-foreground">Managed by the system</p>
+            <div className="text-2xl font-bold">{filteredEmployees.length}</div>
+            <p className="text-xs text-muted-foreground">{selectedDept === 'All' ? 'Across all departments' : `In ${selectedDept}`}</p>
           </CardContent>
         </Card>
         <Card>
@@ -83,26 +129,68 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{presentToday} / {employees.length}</div>
-            <p className="text-xs text-muted-foreground">{((presentToday / employees.length) * 100).toFixed(0)}% attendance</p>
+            <p className="text-xs text-muted-foreground">{((presentToday / employees.length) * 100).toFixed(0)}% attendance rate</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">On Leave Today</CardTitle>
+            <Building className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{employees.filter(e => e.attendance[0]?.status === 'on-leave').length}</div>
+            <p className="text-xs text-muted-foreground">Employees on approved leave</p>
           </CardContent>
         </Card>
       </div>
       
-       <Tabs defaultValue="requests" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+       <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="overview"><BarChart className="mr-2 h-4 w-4"/>Department Overview</TabsTrigger>
           <TabsTrigger value="requests"><ClipboardList className="mr-2 h-4 w-4"/>Pending Requests</TabsTrigger>
-          <TabsTrigger value="employees"><Users className="mr-2 h-4 w-4"/>Employee Overview</TabsTrigger>
+          <TabsTrigger value="employees"><Users className="mr-2 h-4 w-4"/>Employee Directory</TabsTrigger>
         </TabsList>
+        <TabsContent value="overview">
+            <Card>
+              <CardHeader>
+                  <CardTitle>Today's Attendance by Department</CardTitle>
+                  <CardDescription>A snapshot of who's in, out, and on leave across the company.</CardDescription>
+              </CardHeader>
+              <CardContent className="h-[350px] w-full">
+                 <ResponsiveContainer width="100%" height="100%">
+                    <RechartsBarChart data={departmentStats} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                      <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis fontSize={12} tickLine={false} axisLine={false} />
+                      <Tooltip 
+                        contentStyle={{
+                           background: "hsl(var(--background))",
+                           border: "1px solid hsl(var(--border))",
+                           borderRadius: "var(--radius)",
+                        }}
+                        cursor={{fill: "hsl(var(--muted))"}}
+                      />
+                      <Legend iconSize={10} wrapperStyle={{paddingTop: '20px'}}/>
+                      <Bar dataKey="present" stackId="a" fill="hsl(var(--success))" name="Present" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="onLeave" stackId="a" fill="hsl(var(--primary))" name="On Leave"/>
+                      <Bar dataKey="absent" stackId="a" fill="hsl(var(--destructive))" name="Absent" />
+                    </RechartsBarChart>
+                  </ResponsiveContainer>
+              </CardContent>
+            </Card>
+        </TabsContent>
         <TabsContent value="requests">
           <Card>
             <CardHeader>
               <CardTitle>Approve Requests</CardTitle>
+              <CardDescription>There are {pendingRequests.length} requests needing your attention.</CardDescription>
             </CardHeader>
             <CardContent>
+              <ScrollArea className="h-[400px]">
                <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Employee</TableHead>
+                    <TableHead>Department</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Dates</TableHead>
                     <TableHead className="hidden md:table-cell">Reason</TableHead>
@@ -114,14 +202,18 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
                     pendingRequests.map((req) => (
                       <TableRow key={req.id}>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-8 w-8">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-9 w-9">
                                <AvatarImage src={req.employeeAvatar} alt={req.employeeName} data-ai-hint="person portrait" />
                                <AvatarFallback>{req.employeeName.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <span className="font-medium">{req.employeeName}</span>
+                            <div>
+                                <p className="font-medium">{req.employeeName}</p>
+                                <p className="text-xs text-muted-foreground">{req.employeeId}</p>
+                            </div>
                            </div>
                         </TableCell>
+                        <TableCell>{employees.find(e => e.id === req.employeeId)?.department}</TableCell>
                         <TableCell><Badge variant="outline" className="capitalize">{req.type}</Badge></TableCell>
                         <TableCell>
                            {format(parseISO(req.startDate), "d MMM")} - {format(parseISO(req.endDate), "d MMM")}
@@ -141,55 +233,63 @@ export function AdminDashboard({ employees, requests: initialRequests }: AdminDa
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
                         No pending requests.
                       </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               </Table>
+              </ScrollArea>
             </CardContent>
           </Card>
         </TabsContent>
         <TabsContent value="employees">
           <Card>
             <CardHeader>
-              <CardTitle>All Employees</CardTitle>
+              <CardTitle>Employee Directory</CardTitle>
+              <CardDescription>Showing {filteredEmployees.length} of {employees.length} employees.</CardDescription>
             </CardHeader>
             <CardContent>
+             <ScrollArea className="h-[600px]">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
+                    <TableHead className="w-[250px]">Name</TableHead>
                     <TableHead>Department</TableHead>
                     <TableHead>Leave Balance</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {employees.map((emp) => (
+                  {filteredEmployees.map((emp) => (
                      <TableRow key={emp.id}>
                         <TableCell>
-                           <div className="flex items-center gap-2">
-                            <Avatar className="h-8 w-8">
+                           <div className="flex items-center gap-3">
+                            <Avatar className="h-9 w-9">
                                <AvatarImage src={emp.avatarUrl} alt={emp.name} data-ai-hint="person portrait"/>
                                <AvatarFallback>{emp.name.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <span className="font-medium">{emp.name}</span>
+                            <div>
+                                <p className="font-medium">{emp.name}</p>
+                                <p className="text-xs text-muted-foreground">{emp.id}</p>
+                            </div>
                            </div>
                         </TableCell>
                         <TableCell>{emp.department}</TableCell>
                         <TableCell>{emp.leaveBalance} days</TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <div className="h-2.5 w-2.5 rounded-full bg-success" />
-                            <span>Present</span>
+                           <div className="flex items-center gap-2">
+                            <Badge variant={emp.attendance[0]?.status === 'present' ? 'default' : 'secondary'} className={emp.attendance[0]?.status === 'present' ? 'bg-success' : 'bg-gray-400'}>
+                                {emp.attendance[0]?.status === 'present' ? 'Present' : 'Absent'}
+                            </Badge>
                           </div>
                         </TableCell>
                       </TableRow>
                   ))}
                 </TableBody>
               </Table>
+              </ScrollArea>
             </CardContent>
           </Card>
         </TabsContent>
