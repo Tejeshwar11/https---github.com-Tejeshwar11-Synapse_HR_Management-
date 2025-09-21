@@ -81,7 +81,7 @@ export function AttendanceCalendar({ attendance, initialYear = currentYear, init
         tooltipContent = `Holiday: ${holidayName}`;
         content = (
             <div className="flex items-center gap-1.5 text-xs px-1">
-                <div className={cn("h-2 w-2 rounded-full", dotStatusStyles[status])} />
+                <div className={cn("h-2 w-2 rounded-full shrink-0", dotStatusStyles[status])} />
                 <span className="truncate">{holidayName}</span>
             </div>
         );
@@ -94,7 +94,7 @@ export function AttendanceCalendar({ attendance, initialYear = currentYear, init
         } else if (status) {
             tooltipContent = `Status: ${status.replace('-', ' ')}`;
             content = (
-                <Badge variant="outline" className={cn("w-full justify-center capitalize border-none text-xs", badgeStatusStyles[status])}>
+                <Badge variant="outline" className={cn("w-full justify-center capitalize border-none text-xs py-1 h-auto", badgeStatusStyles[status])}>
                   {status.replace('-', ' ')}
                 </Badge>
             );
@@ -103,22 +103,22 @@ export function AttendanceCalendar({ attendance, initialYear = currentYear, init
         status = 'absent';
         tooltipContent = `Status: Absent`;
         content = (
-            <Badge variant="outline" className={cn("w-full justify-center capitalize border-none text-xs", badgeStatusStyles[status])}>
+            <Badge variant="outline" className={cn("w-full justify-center capitalize border-none text-xs py-1 h-auto", badgeStatusStyles[status])}>
               Absent
             </Badge>
         );
     }
     
     const dayContent = (
-      <div className={cn("relative w-full h-full flex flex-col items-center justify-center p-1 group hover:bg-gray-50 transition-colors", 
+      <div className={cn("relative w-full h-full flex flex-col items-center justify-start p-1 group hover:bg-gray-50 transition-colors", 
         (isWeekend || isOutside) && "bg-gray-50"
       )}>
         <span className={cn(
-            "absolute top-1 right-1 text-xs", 
+            "self-end text-xs", 
             isOutside && "text-gray-400",
             isCurrentDay && "flex items-center justify-center h-5 w-5 rounded-full bg-primary text-primary-foreground"
         )}>{format(date, "d")}</span>
-        <div className="flex-grow flex items-center justify-center w-full mt-4">
+        <div className="flex-grow flex items-center justify-center w-full">
             {content}
         </div>
       </div>
