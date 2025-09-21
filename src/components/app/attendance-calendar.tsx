@@ -1,10 +1,10 @@
+
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { DayPicker, Matcher } from "react-day-picker";
-import { Badge } from "@/components/ui/badge";
 import type { AttendanceRecord } from "@/lib/types";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, getMonth, getYear, setMonth, setYear } from "date-fns";
 import { holidayMap } from "@/lib/holidays";
 import {
   Select,
@@ -14,7 +14,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
-
+import { Button } from "../ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AttendanceCalendarProps {
   attendance: AttendanceRecord[];
@@ -23,60 +25,114 @@ interface AttendanceCalendarProps {
 }
 
 const currentYear = new Date().getFullYear();
-const YEARS = [currentYear, currentYear - 1, currentYear - 2];
+const YEARS = Array.from({ length: 3 }, (_, i) => currentYear - i);
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June", 
+  "July", "August", "September", "October", "November", "December"
+];
+
+const statusStyles: Record<string, string> = {
+    present: "bg-green-500",
+    absent: "bg-red-500",
+    'half-day': "bg-yellow-500",
+    'on-leave': "bg-blue-500",
+    holiday: "bg-gray-400",
+};
 
 export function AttendanceCalendar({ attendance, initialYear = currentYear, initialMonth = new Date().getMonth() }: AttendanceCalendarProps) {
   const [month, setMonth] = useState<Date>(new Date(initialYear, initialMonth));
-  const selectedYear = month.getFullYear();
+  
+  const attendanceMap = useMemo(() => 
+    new Map(attendance.map(a => [a.date, a])), 
+  [attendance]);
 
   const handleYearChange = (year: string) => {
     const newYear = parseInt(year, 10);
-    setMonth(new Date(newYear, month.getMonth()));
+    setMonth(current => setYear(current, newYear));
   };
 
-  const getAttendanceForDay = (date: Date): AttendanceRecord | undefined => {
-    const dateStr = format(date, 'yyyy-MM-dd');
-    return attendance.find(a => a.date === dateStr);
+  const handleMonthChange = (monthIndex: string) => {
+      setMonth(current => setMonth(current, parseInt(monthIndex, 10)));
   }
 
-  const holidayDays: Matcher[] = Array.from(holidayMap.keys()).map(dateStr => parseISO(dateStr));
-  const presentDays: Matcher[] = attendance.filter(a => a.status === 'present').map(a => parseISO(a.date));
-  const absentDays: Matcher[] = attendance.filter(a => a.status === 'absent').map(a => parseISO(a.date));
-  const halfDays: Matcher[] = attendance.filter(a => a.status === 'half-day').map(a => parseISO(a.date));
-  const onLeaveDays: Matcher[] = attendance.filter(a => a.status === 'on-leave').map(a => parseISO(a.date));
+  const handleNav = (direction: 'prev' | 'next') => {
+      setMonth(current => new Date(current.getFullYear(), current.getMonth() + (direction === 'prev' ? -1 : 1), 1));
+  }
 
   const CustomDay = ({ date }: { date: Date }) => {
-    const attendanceRecord = getAttendanceForDay(date);
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const attendanceRecord = attendanceMap.get(dateStr);
+    const holidayName = holidayMap.get(dateStr);
+    const dayOfWeek = date.getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+    let status = attendanceRecord?.status;
+    let tooltipContent = null;
+    let dotClass = "";
+
+    if (holidayName) {
+        status = 'holiday';
+        tooltipContent = `Holiday: ${holidayName}`;
+        dotClass = statusStyles.holiday;
+    } else if (isWeekend) {
+        tooltipContent = "Weekend";
+    } else if (attendanceRecord) {
+        if (status === 'present' && attendanceRecord.punchIn && attendanceRecord.punchOut) {
+            tooltipContent = `Status: Present\nIn: ${attendanceRecord.punchIn}, Out: ${attendanceRecord.punchOut}`;
+        } else {
+            tooltipContent = `Status: ${status?.replace('-', ' ')}`;
+        }
+        dotClass = status ? statusStyles[status] : "";
+    } else if (date < new Date()) {
+        status = 'absent'; // Assume absent if no record for a past weekday
+        tooltipContent = `Status: Absent`;
+        dotClass = statusStyles.absent;
+    }
+
     const dayContent = (
-      <div className="relative w-full h-full flex items-center justify-center">
-        {format(date, "d")}
+      <div className="relative w-full h-full flex flex-col items-end p-1">
+        <span className="text-xs">{format(date, "d")}</span>
+        {dotClass && <div className={cn("absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full", dotClass)}></div>}
       </div>
     );
-
-    if (attendanceRecord?.punchIn && attendanceRecord?.punchOut) {
-      return (
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>{dayContent}</TooltipTrigger>
-                <TooltipContent>
-                <p>Punch In: {attendanceRecord.punchIn}</p>
-                <p>Punch Out: {attendanceRecord.punchOut}</p>
-                <p>Total Hours: {attendanceRecord.totalHours}h</p>
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
-      );
+    
+    if (tooltipContent) {
+         return (
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>{dayContent}</TooltipTrigger>
+                    <TooltipContent className="whitespace-pre-line">
+                        {tooltipContent}
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        );
     }
     return dayContent;
   };
 
   const Caption = () => (
-     <div className="flex justify-center items-center relative w-full px-10">
-        <h2 className="font-semibold text-lg">
-          {format(month, 'MMMM')}
-        </h2>
-        <div className="ml-2">
-            <Select value={String(selectedYear)} onValueChange={handleYearChange}>
+     <div className="flex justify-between items-center relative w-full px-1 mb-4">
+        <div>
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleNav('prev')}>
+                <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" className="h-8 w-8 ml-2" onClick={() => handleNav('next')}>
+                <ChevronRight className="h-4 w-4" />
+            </Button>
+        </div>
+        <div className="flex items-center gap-2">
+            <Select value={String(getMonth(month))} onValueChange={handleMonthChange}>
+                <SelectTrigger className="w-36 focus:ring-0">
+                    <SelectValue placeholder="Month" />
+                </SelectTrigger>
+                <SelectContent>
+                    {MONTHS.map((m, i) => (
+                        <SelectItem key={m} value={String(i)}>{m}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            <Select value={String(getYear(month))} onValueChange={handleYearChange}>
                 <SelectTrigger className="w-28 focus:ring-0">
                     <SelectValue placeholder="Year" />
                 </SelectTrigger>
@@ -93,19 +149,14 @@ export function AttendanceCalendar({ attendance, initialYear = currentYear, init
   return (
     <>
       <style>{`
-        .day-present { background-color: hsl(var(--success) / 0.8); color: hsl(var(--success-foreground)); }
-        .day-absent { background-color: hsl(var(--destructive) / 0.8); color: hsl(var(--destructive-foreground)); }
-        .day-halfDay { background-color: hsl(var(--warning) / 0.8); color: hsl(var(--warning-foreground)); }
-        .day-onLeave { background-color: hsl(var(--primary) / 0.8); color: hsl(var(--primary-foreground)); }
-        .day-holiday { background-color: hsl(var(--accent)); color: hsl(var(--accent-foreground)); border: 1px solid hsl(var(--border)); }
-        .day-present, .day-absent, .day-halfDay, .day-onLeave, .day-holiday { border-radius: var(--radius); }
-        .rdp-day_today:not(.rdp-day_outside) { font-weight: bold; border: 2px solid hsl(var(--primary)); border-radius: var(--radius); }
-        .rdp { --rdp-cell-size: 40px; border-spacing: 2px; }
-        .rdp-day { border: 1px solid transparent; }
-        .rdp-table { border-collapse: separate; }
-        .rdp-head_cell { font-weight: 500; }
+        .rdp-table, .rdp-month, .rdp-vhidden { width: 100%; }
+        .rdp-head_cell { font-weight: 500; color: hsl(var(--muted-foreground)); text-transform: uppercase; font-size: 0.75rem; }
+        .rdp-day { border: 1px solid hsl(var(--border)); height: var(--rdp-cell-size); width: var(--rdp-cell-size); }
+        .rdp-day_outside { color: hsl(var(--muted-foreground)); }
+        .rdp-day_today { border: 2px solid hsl(var(--primary)); border-radius: var(--radius); }
+        .rdp-table { border-collapse: collapse; }
+        .rdp { --rdp-cell-size: 60px; }
         .rdp-caption_label { display: none; }
-        .rdp-nav_button { border-radius: var(--radius); }
       `}</style>
       <DayPicker
         month={month}
@@ -115,31 +166,19 @@ export function AttendanceCalendar({ attendance, initialYear = currentYear, init
           DayContent: CustomDay,
           Caption: Caption,
         }}
-        modifiers={{ 
-          present: presentDays, 
-          absent: absentDays, 
-          halfDay: halfDays, 
-          onLeave: onLeaveDays,
-          holiday: holidayDays
-        }}
-        modifiersClassNames={{
-          present: 'day-present',
-          absent: 'day-absent',
-          halfDay: 'day-halfDay',
-          onLeave: 'day-onLeave',
-          holiday: 'day-holiday'
-        }}
         className="w-full"
         showOutsideDays
         today={new Date()}
       />
-      <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
-        <div className="flex items-center gap-2"><Badge className="bg-success hover:bg-success/90 w-4 h-4 p-0" /> Present</div>
-        <div className="flex items-center gap-2"><Badge className="bg-warning hover:bg-warning/90 w-4 h-4 p-0" /> Half-Day</div>
-        <div className="flex items-center gap-2"><Badge className="bg-destructive hover:bg-destructive/90 w-4 h-4 p-0" /> Absent</div>
-        <div className="flex items-center gap-2"><Badge className="bg-primary hover:bg-primary/90 w-4 h-4 p-0" /> On Leave</div>
-        <div className="flex items-center gap-2"><Badge className="bg-accent hover:bg-accent/90 w-4 h-4 p-0 border border-border" /> Holiday</div>
+      <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground justify-center">
+        <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-green-500"></span> Present</div>
+        <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-yellow-500"></span> Half-Day</div>
+        <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-red-500"></span> Absent</div>
+        <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-blue-500"></span> On Leave</div>
+        <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-gray-400"></span> Holiday</div>
       </div>
     </>
   );
 }
+
+    

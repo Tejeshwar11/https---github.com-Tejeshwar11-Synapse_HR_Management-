@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,18 +17,12 @@ export function EmployeeHistory({ employee }: EmployeeHistoryProps) {
                 <p className="text-muted-foreground">A detailed view of your attendance for the last 3 years.</p>
             </header>
             <Card>
-                <CardHeader>
-                    <CardTitle>Attendance Calendar</CardTitle>
-                    <CardDescription>
-                        Here is a log of your daily status. Use the controls to navigate through years and months.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex justify-center">
-                      <AttendanceCalendar attendance={employee.attendance} />
-                    </div>
+                <CardContent className="p-6">
+                    <AttendanceCalendar attendance={employee.attendance} />
                 </CardContent>
             </Card>
         </div>
     );
 }
+
+    
