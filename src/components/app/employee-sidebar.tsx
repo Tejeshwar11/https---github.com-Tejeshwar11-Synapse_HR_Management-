@@ -19,27 +19,25 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import type { Employee } from "@/lib/types"
 
 interface EmployeeSidebarProps {
-    employee: {
-        name: string;
-        avatarUrl: string;
-    }
+    employee: Employee;
 }
-
-const employeeNav = [
-  { href: "/employee", label: "Dashboard", icon: Home },
-  { href: "/employee/history", label: "My History", icon: Clock },
-  { href: "/employee/goals", label: "My Goals (OKRs)", icon: Target },
-  { href: "/employee/growth", label: "Growth Hub", icon: TrendingUp },
-  { href: "/employee/kudos", label: "Kudos Wall", icon: Award },
-  { href: "/employee/team", label: "Team Calendar", icon: Calendar },
-]
 
 export function EmployeeSidebar({ employee }: EmployeeSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(true);
+  
+  const employeeNav = [
+    { href: `/employee/${employee.id}`, label: "Dashboard", icon: Home },
+    { href: `/employee/${employee.id}/history`, label: "My History", icon: Clock },
+    { href: `/employee/${employee.id}/goals`, label: "My Goals (OKRs)", icon: Target },
+    { href: `/employee/${employee.id}/growth`, label: "Growth Hub", icon: TrendingUp },
+    { href: `/employee/${employee.id}/kudos`, label: "Kudos Wall", icon: Award },
+    { href: `/employee/${employee.id}/team`, label: "Team Calendar", icon: Calendar },
+  ]
 
   const handleLogout = () => {
     router.push('/login');

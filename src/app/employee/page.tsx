@@ -1,10 +1,8 @@
+import { redirect } from 'next/navigation';
 
-
-import { EmployeeDashboard } from "@/components/app/employee-dashboard";
-import { mockPriyaSharma } from "@/lib/data";
-
-export default function EmployeePage() {
-  // In a real app, you would fetch the employee data based on the ID.
-  // For this prototype, we'll use the mock data for Priya Sharma.
-  return <EmployeeDashboard employee={mockPriyaSharma} />;
+export default function EmployeeRedirectPage() {
+  // This page is now redundant. We redirect to a default employee to simulate
+  // a scenario where the user lands on /employee without a specific ID.
+  // In a real app, you might redirect to a user selection screen or the logged-in user's page.
+  redirect('/employee/282');
 }

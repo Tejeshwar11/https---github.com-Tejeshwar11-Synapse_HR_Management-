@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { BrainCircuit, Eye, EyeOff, Loader2 } from "lucide-react";
 import Link from "next/link";
 
@@ -51,7 +50,7 @@ export default function LoginPage() {
         description: `Welcome back! Redirecting you to your dashboard.`,
       });
       if (values.role === 'employee' && user.role === 'Employee') {
-        router.push('/employee');
+        router.push(`/employee/${user.id}`);
       } else if (values.role === 'hr' && user.role === 'HR') {
         router.push('/hr');
       } else {
