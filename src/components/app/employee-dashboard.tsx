@@ -13,6 +13,7 @@ import {
   Meh,
   Award,
   Sparkles,
+  Wifi,
 } from "lucide-react";
 import {
   Pie,
@@ -126,9 +127,20 @@ interface EmployeeDashboardProps {
 
 export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboardProps) {
   const [employee, setEmployee] = useState(initialEmployee);
-  const { isConnected, disconnectCount, simulateDisconnect } = useWifi();
+  const { isConnected, disconnectCount, simulateDisconnect, simulateReconnect } = useWifi();
   const { toast } = useToast();
   const [isPunchedIn, setIsPunchedIn] = useState(false);
+  
+  useEffect(() => {
+    if (isConnected === false && isPunchedIn) {
+      setIsPunchedIn(false);
+      toast({
+        variant: "destructive",
+        title: "Punched Out due to Disconnection",
+        description: "Your attendance status has been updated.",
+      });
+    }
+  }, [isConnected, isPunchedIn, toast]);
 
   useEffect(() => {
     if (disconnectCount > 2) {
@@ -289,7 +301,10 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <CardTitle>My Recent Requests</CardTitle>
-                     <Button variant="destructive" size="sm" onClick={simulateDisconnect}>Simulate Wi-Fi Disconnect</Button>
+                    <div className="flex gap-2">
+                     <Button variant="destructive" size="sm" onClick={simulateDisconnect}><WifiOff className="mr-2 h-4 w-4"/>Simulate Disconnect</Button>
+                     <Button variant="secondary" size="sm" onClick={simulateReconnect}><Wifi className="mr-2 h-4 w-4"/>Simulate Reconnect</Button>
+                    </div>
                   </div>
                     <CardDescription>You have {employee.requests.filter(r => r.status === 'Pending').length} pending requests.</CardDescription>
                 </CardHeader>

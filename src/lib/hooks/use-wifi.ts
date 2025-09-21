@@ -26,8 +26,11 @@ export function useWifi() {
         // Persist to local storage if needed, for now it's session-based
         return newCount;
     });
-    setTimeout(() => setIsConnected(true), 2000); // Auto-reconnect after 2s
   }, []);
 
-  return { isConnected, disconnectCount, simulateDisconnect };
+  const simulateReconnect = useCallback(() => {
+    setIsConnected(true);
+  }, []);
+
+  return { isConnected, disconnectCount, simulateDisconnect, simulateReconnect };
 }
