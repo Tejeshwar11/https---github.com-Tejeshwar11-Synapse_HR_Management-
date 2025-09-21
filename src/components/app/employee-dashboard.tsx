@@ -1,7 +1,7 @@
 
+
 "use client";
 
-import React, a
 import { useState, useEffect } from "react";
 import {
   Flame,
