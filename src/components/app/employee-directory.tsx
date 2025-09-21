@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from "react";
@@ -9,11 +10,10 @@ import {
   Sparkles
 } from "lucide-react";
 import { format } from "date-fns";
-import * as Popover from '@radix-ui/react-popover';
 
 import type { Employee } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -30,29 +30,52 @@ import { Input } from "@/components/ui/input";
 import { DEPARTMENTS as departmentList } from "@/lib/data";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 
 const DEPARTMENTS = ["All", ...departmentList];
 
-const WordCloud = ({ skills, onSkillSelect }: { skills: { text: string, value: number }[], onSkillSelect: (skill: string) => void }) => {
-  // Basic word cloud styling for demonstration
+const SKILL_COLORS = ['text-primary', 'text-slate-gray', 'text-teal-600'];
+
+const WordCloudDialog = ({ skills, onSkillSelect }: { skills: { text: string, value: number }[], onSkillSelect: (skill: string) => void }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    const handleSkillClick = (skill: string) => {
+        onSkillSelect(skill);
+        setIsOpen(false);
+    }
+
+    const maxCount = Math.max(...skills.map(s => s.value), 1);
+
+    const getFontSize = (value: number) => {
+        const minSize = 12; // 0.75rem
+        const maxSize = 36; // 2.25rem
+        const scale = (value / maxCount);
+        return `${minSize + (maxSize - minSize) * scale}px`;
+    }
+
   return (
-    <Popover.Root>
-        <Popover.Trigger asChild>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>
             <Button variant="outline"><Sparkles className="mr-2 h-4 w-4" /> View Skills Cloud</Button>
-        </Popover.Trigger>
-        <Popover.Content className="w-96">
-            <div className="p-4">
-                <h4 className="font-semibold mb-2">Top Skills in Workforce</h4>
-                <div className="flex flex-wrap gap-2">
-                {skills.map(skill => (
-                    <button key={skill.text} onClick={() => onSkillSelect(skill.text)} className="text-sm text-primary hover:underline" style={{ fontSize: `${10 + skill.value / 2}px` }}>
-                    {skill.text}
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-3xl">
+            <DialogHeader>
+                <DialogTitle>Company Skills Cloud</DialogTitle>
+            </DialogHeader>
+            <div className="p-6 flex flex-wrap gap-x-4 gap-y-2 items-center justify-center">
+                {skills.map((skill, index) => (
+                    <button 
+                        key={skill.text} 
+                        onClick={() => handleSkillClick(skill.text)} 
+                        className={`font-semibold transition-transform hover:scale-110 ${SKILL_COLORS[index % SKILL_COLORS.length]}`}
+                        style={{ fontSize: getFontSize(skill.value) }}
+                    >
+                      {skill.text}
                     </button>
                 ))}
-                </div>
             </div>
-        </Popover.Content>
-    </Popover.Root>
+        </DialogContent>
+    </Dialog>
   );
 };
 
@@ -93,7 +116,7 @@ export function EmployeeDirectory({ employees }: EmployeeDirectoryProps) {
     return Array.from(skillCounts.entries())
         .map(([text, value]) => ({ text, value }))
         .sort((a,b) => b.value - a.value)
-        .slice(0, 25); // Top 25 skills
+        .slice(0, 30); // Top 30 skills
   }, [employees]);
 
   const handleSkillSelect = (skill: string) => {
@@ -132,7 +155,7 @@ export function EmployeeDirectory({ employees }: EmployeeDirectoryProps) {
                 />
               </div>
                <div className="flex gap-2">
-                <WordCloud skills={skillsWordCloudData} onSkillSelect={handleSkillSelect} />
+                <WordCloudDialog skills={skillsWordCloudData} onSkillSelect={handleSkillSelect} />
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="w-full sm:w-auto min-w-[200px] justify-between">
@@ -225,3 +248,5 @@ export function EmployeeDirectory({ employees }: EmployeeDirectoryProps) {
     </div>
   );
 }
+
+    
