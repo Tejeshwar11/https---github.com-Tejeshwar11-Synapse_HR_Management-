@@ -234,7 +234,7 @@ for (let i = 0; i < totalEmployees; i++) {
 }
 
 // Generate Kudos Feed
-export const mockKudos: Kudos[] = Array.from({length: 20}).map((_, i) => {
+const generatedKudos: Kudos[] = Array.from({length: 20}).map((_, i) => {
     const sender = allEmployees[Math.floor(Math.random() * totalEmployees)];
     const receiver = allEmployees[Math.floor(Math.random() * totalEmployees)];
     const message = KUDOS_MESSAGES[Math.floor(Math.random() * KUDOS_MESSAGES.length)];
@@ -249,8 +249,11 @@ export const mockKudos: Kudos[] = Array.from({length: 20}).map((_, i) => {
     // Add to receiver's kudos list
     const receiverEmployee = allEmployees.find(e => e.id === receiver.id);
     if(receiverEmployee) receiverEmployee.kudos.push(kudosItem);
-    return kudosItem.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    return kudosItem;
 });
+
+export const mockKudos: Kudos[] = generatedKudos.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
 
 // Generate Internal Openings
 export const mockInternalOpenings: JobOpening[] = [
