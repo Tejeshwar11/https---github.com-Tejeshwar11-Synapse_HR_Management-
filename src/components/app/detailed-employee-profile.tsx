@@ -1,10 +1,14 @@
 "use client";
 
+import React, { useState, useMemo } from 'react';
 import Image from "next/image";
-import { TrendingDown, TrendingUp, LineChart, FileWarning, Sparkles } from "lucide-react";
+import { TrendingDown, TrendingUp, LineChart, FileWarning, Sparkles, Calendar as CalendarIcon, Search, Download } from "lucide-react";
 import { RadialBar, RadialBarChart, ResponsiveContainer } from "recharts";
+import { DateRange } from "react-day-picker";
+import { format, parseISO } from 'date-fns';
 
-import type { Employee } from "@/lib/types";
+
+import type { AttendanceRecord, Employee } from "@/lib/types";
 import { AppSidebar } from "./app-sidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
@@ -13,6 +17,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { mockFatimaAlJamil } from "@/lib/data";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Badge } from "../ui/badge";
+import { AttendanceCalendar } from './attendance-calendar';
+import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from '../ui/table';
+import { Input } from '../ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Calendar } from '../ui/calendar';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface DetailedEmployeeProfileProps {
   employee: Employee;
@@ -60,6 +71,128 @@ const GrowthPlanDialog = ({ employee }: { employee: Employee}) => {
     )
 }
 
+const AttendanceDataTable = ({ attendance }: { attendance: AttendanceRecord[] }) => {
+    const { toast } = useToast();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [dateRange, setDateRange] = useState<DateRange | undefined>();
+
+    const filteredData = useMemo(() => {
+        return attendance.filter(record => {
+            const date = parseISO(record.date);
+            const inRange = !dateRange || (
+                (!dateRange.from || date >= dateRange.from) &&
+                (!dateRange.to || date <= dateRange.to)
+            );
+            const matchesSearch = searchTerm === '' || record.status.toLowerCase().includes(searchTerm.toLowerCase());
+            return inRange && matchesSearch;
+        });
+    }, [attendance, searchTerm, dateRange]);
+
+    const handleExport = () => {
+        toast({
+            title: "Exporting Data",
+            description: "Your CSV file is being generated and will download shortly."
+        });
+        // In a real app, this would trigger a CSV download.
+    }
+
+    return (
+        <div className="space-y-4">
+            <div className="flex flex-wrap gap-4 justify-between items-center">
+                <div className="relative w-full sm:max-w-xs">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                        placeholder="Search by status..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-8"
+                    />
+                </div>
+                <div className="flex gap-2">
+                     <Popover>
+                        <PopoverTrigger asChild>
+                        <Button
+                            id="date"
+                            variant={'outline'}
+                            className={cn(
+                            'w-[300px] justify-start text-left font-normal',
+                            !dateRange && 'text-muted-foreground'
+                            )}
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {dateRange?.from ? (
+                            dateRange.to ? (
+                                <>
+                                {format(dateRange.from, 'LLL dd, y')} - {format(dateRange.to, 'LLL dd, y')}
+                                </>
+                            ) : (
+                                format(dateRange.from, 'LLL dd, y')
+                            )
+                            ) : (
+                            <span>Pick a date range</span>
+                            )}
+                        </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                            initialFocus
+                            mode="range"
+                            defaultMonth={dateRange?.from}
+                            selected={dateRange}
+                            onSelect={setDateRange}
+                            numberOfMonths={2}
+                        />
+                        </PopoverContent>
+                    </Popover>
+                    <Button onClick={handleExport}><Download className="mr-2 h-4 w-4" /> Export CSV</Button>
+                </div>
+            </div>
+            <div className="border rounded-md">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Punch-In</TableHead>
+                            <TableHead>Punch-Out</TableHead>
+                            <TableHead className="text-right">Total Hours</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                       {filteredData.slice(0, 100).map(record => ( // Limit to 100 for performance
+                           <TableRow key={record.date}>
+                               <TableCell>{format(parseISO(record.date), 'MMM d, yyyy')}</TableCell>
+                               <TableCell><Badge variant={
+                                   record.status === 'present' ? 'default' :
+                                   record.status === 'absent' ? 'destructive' :
+                                   record.status === 'half-day' ? 'outline' : 'secondary'
+                               }
+                               className={
+                                   record.status === 'present' ? 'bg-success hover:bg-success/90' :
+                                   record.status === 'half-day' ? 'bg-warning text-warning-foreground border-warning' :
+                                   record.status === 'on-leave' ? 'bg-primary/80' : ''
+                               }
+                               >{record.status.replace('-', ' ')}</Badge></TableCell>
+                               <TableCell>{record.punchIn || 'N/A'}</TableCell>
+                               <TableCell>{record.punchOut || 'N/A'}</TableCell>
+                               <TableCell className="text-right">{record.totalHours ? `${record.totalHours}h` : 'N/A'}</TableCell>
+                           </TableRow>
+                       ))}
+                       {filteredData.length === 0 && (
+                           <TableRow>
+                               <TableCell colSpan={5} className="text-center h-24">No records found for the selected criteria.</TableCell>
+                           </TableRow>
+                       )}
+                    </TableBody>
+                </Table>
+                 {filteredData.length > 100 && (
+                    <div className="p-4 text-xs text-muted-foreground">Showing first 100 of {filteredData.length} records. Use filters to narrow results.</div>
+                )}
+            </div>
+        </div>
+    )
+}
+
 export function DetailedEmployeeProfile({ employee }: DetailedEmployeeProfileProps) {
   const flightRiskData = [
       {
@@ -89,8 +222,8 @@ export function DetailedEmployeeProfile({ employee }: DetailedEmployeeProfilePro
             <Tabs defaultValue="overview">
                 <TabsList>
                     <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="attendance">Complete Attendance History</TabsTrigger>
                     <TabsTrigger value="presence">Presence Analytics</TabsTrigger>
-
                 </TabsList>
                 <TabsContent value="overview" className="mt-4">
                     <div className="grid gap-6 lg:grid-cols-3">
@@ -165,6 +298,30 @@ export function DetailedEmployeeProfile({ employee }: DetailedEmployeeProfilePro
                             </CardContent>
                         </Card>
                     </div>
+                </TabsContent>
+                <TabsContent value="attendance" className="mt-4">
+                    <Card className="rounded-xl shadow-md">
+                        <CardHeader>
+                            <CardTitle>Complete Attendance History</CardTitle>
+                            <CardDescription>Full 3-year attendance record for {employee.name}.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                           <Tabs defaultValue="calendar">
+                               <TabsList>
+                                   <TabsTrigger value="calendar">Calendar View</TabsTrigger>
+                                   <TabsTrigger value="data">Data View</TabsTrigger>
+                               </TabsList>
+                               <TabsContent value="calendar" className="mt-4">
+                                   <div className="flex justify-center">
+                                     <AttendanceCalendar attendance={employee.attendance} />
+                                   </div>
+                               </TabsContent>
+                               <TabsContent value="data" className="mt-4">
+                                   <AttendanceDataTable attendance={employee.attendance} />
+                               </TabsContent>
+                           </Tabs>
+                        </CardContent>
+                    </Card>
                 </TabsContent>
                 <TabsContent value="presence" className="mt-4">
                      <Card className="rounded-xl shadow-md">

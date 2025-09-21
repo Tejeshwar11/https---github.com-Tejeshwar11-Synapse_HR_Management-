@@ -1,6 +1,7 @@
 
 import type { Employee, HrAdmin, LeaveRequest, AttendanceRecord, RequestStatus, Kudos, Goal, JobOpening, WellnessStat, Skill, Workflow, Department } from '@/lib/types';
-import { subDays, format, addDays, parseISO, startOfQuarter, endOfQuarter, eachDayOfInterval } from 'date-fns';
+import { subDays, format, addDays, parseISO, startOfQuarter, endOfQuarter, eachDayOfInterval, subYears } from 'date-fns';
+import { HOLIDAYS, holidayMap } from './holidays';
 
 // --- DATA POOLS FOR GENERATION ---
 export const DEPARTMENTS: Department[] = [
@@ -68,25 +69,61 @@ const seededRandom = (seed: number) => {
     return x - Math.floor(x);
 };
 
+const generatePunchTimes = (seed: number): { punchIn: string, punchOut: string, totalHours: number } => {
+    const startHour = 8 + Math.floor(seededRandom(seed) * 2); // 8-9
+    const startMinute = Math.floor(seededRandom(seed + 1) * 30); // 0-29
+    const punchIn = `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
+
+    const workDurationHours = 8 + seededRandom(seed + 2); // 8-9 hours
+    const endHour = startHour + Math.floor(workDurationHours);
+    const endMinute = Math.floor((startMinute + (workDurationHours % 1) * 60) % 60);
+    const punchOut = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
+
+    const totalHours = parseFloat(workDurationHours.toFixed(2));
+    
+    return { punchIn, punchOut, totalHours };
+};
+
+
 const generateAttendanceHistory = (employeeId: string): AttendanceRecord[] => {
     const history: AttendanceRecord[] = [];
     const today = new Date();
     const seed = parseInt(employeeId, 10);
-    const interval = { start: subDays(today, 89), end: today };
+    const threeYearsAgo = subYears(today, 3);
+    const startDate = new Date(threeYearsAgo.getFullYear(), 0, 1);
     
-    eachDayOfInterval(interval).forEach(date => {
+    const interval = { start: startDate, end: today };
+    
+    eachDayOfInterval(interval).forEach((date, i) => {
+        const dateStr = format(date, 'yyyy-MM-dd');
+        
+        if (holidayMap.has(dateStr)) {
+            history.push({ date: dateStr, status: 'holiday' });
+            return;
+        }
+
         const dayOfWeek = date.getDay();
         if (dayOfWeek === 0 || dayOfWeek === 6) return;
 
-        const random = seededRandom(seed + date.getDate() * (date.getMonth() + 1));
+        const random = seededRandom(seed + date.getDate() * (date.getMonth() + 1) + date.getFullYear());
         let status: AttendanceRecord['status'];
+        let record: Partial<AttendanceRecord> = {};
+
+        if (random < 0.94) {
+            status = 'present';
+            const { punchIn, punchOut, totalHours } = generatePunchTimes(seed + i);
+            record = { punchIn, punchOut, totalHours };
+        } else if (random < 0.98) {
+            status = 'on-leave';
+        } else if (random < 0.995) {
+            status = 'half-day';
+            const { punchIn, punchOut } = generatePunchTimes(seed + i);
+            record = { punchIn, punchOut, totalHours: 4 };
+        } else {
+            status = 'absent';
+        }
         
-        if (random < 0.94) status = 'present';
-        else if (random < 0.98) status = 'on-leave';
-        else if (random < 0.995) status = 'half-day';
-        else status = 'absent';
-        
-        history.push({ date: format(date, 'yyyy-MM-dd'), status });
+        history.push({ date: dateStr, status, ...record });
     });
     
     return history.sort((a, b) => b.date.localeCompare(a.date));
@@ -98,7 +135,7 @@ const generateLeaveRequests = (employeeId: string, attendance: AttendanceRecord[
     const onLeaveDays = attendance.filter(a => a.status === 'on-leave');
     const seed = parseInt(employeeId, 10);
     
-    for (let i = 0; i < onLeaveDays.length && i < 5; i++) {
+    for (let i = 0; i < onLeaveDays.length && i < 15; i++) { // Generate more requests over 3 years
         if (seededRandom(seed + i * 10) > 0.5) {
             const startDate = parseISO(onLeaveDays[i].date);
             const endDate = addDays(startDate, Math.floor(seededRandom(seed + i * 20) * 3));

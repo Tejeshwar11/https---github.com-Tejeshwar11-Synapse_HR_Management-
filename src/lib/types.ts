@@ -1,4 +1,5 @@
 
+
 export type RequestType = 'leave' | 'regularization';
 
 export type RequestStatus = 'Approved' | 'Pending' | 'Rejected';
@@ -15,11 +16,14 @@ export type LeaveRequest = {
   employeeAvatar?: string;
 };
 
-export type AttendanceStatus = 'present' | 'absent' | 'half-day' | 'on-leave';
+export type AttendanceStatus = 'present' | 'absent' | 'half-day' | 'on-leave' | 'holiday';
 
 export type AttendanceRecord = {
   date: string; // YYYY-MM-DD
   status: AttendanceStatus;
+  punchIn?: string; // HH:mm
+  punchOut?: string; // HH:mm
+  totalHours?: number;
 };
 
 export type Department = 'Engineering' | 'Sales' | 'Marketing' | 'R&D' | 'HR';
@@ -96,4 +100,9 @@ export type Workflow = {
   status: 'Pending' | 'In Progress' | 'Completed';
   currentStep: string;
   completion: number;
+}
+
+export type Holiday = {
+    date: string; // YYYY-MM-DD
+    name: string;
 }
