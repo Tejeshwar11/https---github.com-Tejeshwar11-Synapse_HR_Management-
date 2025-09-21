@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { format, parseISO } from "date-fns";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
+import Image from "next/image";
 
 interface HrDashboardProps {
   data: {
@@ -49,11 +50,24 @@ export function HrDashboard({ data, hrUser }: HrDashboardProps) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-3 flex flex-col gap-6">
+            <div className="relative w-full rounded-lg overflow-hidden p-6 min-h-[120px] flex items-center bg-card shadow-md">
+                <Image
+                    src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=2834&auto=format&fit=crop"
+                    alt="Office background"
+                    fill
+                    className="object-cover"
+                    data-ai-hint="abstract office background"
+                />
+                <div className="absolute inset-0 bg-black/60"></div>
+                <div className="relative text-white">
+                    <h1 className="text-3xl font-bold">Good morning, {hrUser.name.split(' ')[0]}.</h1>
+                    <p className="text-white/80">You have {data.workforcePulse.pendingApprovals} pending approvals to review today.</p>
+                </div>
+            </div>
+        </div>
+
         <div className="lg:col-span-2 flex flex-col gap-6">
-         <header>
-            <h1 className="text-3xl font-bold">HR Command Center</h1>
-            <p className="text-muted-foreground">A high-level overview of workforce analytics and key metrics.</p>
-         </header>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

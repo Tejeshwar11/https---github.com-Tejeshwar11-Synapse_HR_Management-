@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -277,7 +275,16 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
                     <CardTitle className="text-base font-semibold">Collaboration Index</CardTitle>
                 </CardHeader>
                 <CardContent className="flex items-center justify-between">
-                    <div className="text-3xl font-bold text-charcoal">{employee.stats.collaborationIndex}/10</div>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="text-3xl font-bold text-charcoal cursor-help">{employee.stats.collaborationIndex}/10</div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>This score reflects your interaction in collaborative zones.<br/> Great for showcasing teamwork!</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                      <div className="h-20 w-20">
                        <ResponsiveContainer width="100%" height="100%">
                          <RadialBarChart
@@ -309,34 +316,40 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
                     <CardDescription>You have {employee.requests.filter(r => r.status === 'Pending').length} pending requests.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Type</TableHead>
-                                <TableHead>Dates</TableHead>
-                                <TableHead>Reason</TableHead>
-                                <TableHead className="text-right">Status</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {employee.requests.slice(0, 3).map((req) => (
-                                <TableRow key={req.id}>
-                                    <TableCell className="font-medium capitalize">{req.type}</TableCell>
-                                    <TableCell>{format(parseISO(req.startDate), 'd MMM')} - {format(parseISO(req.endDate), 'd MMM')}</TableCell>
-                                    <TableCell>{req.reason}</TableCell>
-                                    <TableCell className="text-right">
-                                        <Badge variant={
-                                            req.status === 'Approved' ? 'default' 
-                                            : req.status === 'Pending' ? 'secondary'
-                                            : 'destructive'
-                                        } className={req.status === 'Approved' ? 'bg-success' : req.status === 'Pending' ? 'bg-pending text-pending-foreground': ''}>
-                                            {req.status}
-                                        </Badge>
-                                    </TableCell>
+                    {employee.requests.length > 0 ? (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Type</TableHead>
+                                    <TableHead>Dates</TableHead>
+                                    <TableHead>Reason</TableHead>
+                                    <TableHead className="text-right">Status</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {employee.requests.slice(0, 3).map((req) => (
+                                    <TableRow key={req.id}>
+                                        <TableCell className="font-medium capitalize">{req.type}</TableCell>
+                                        <TableCell>{format(parseISO(req.startDate), 'd MMM')} - {format(parseISO(req.endDate), 'd MMM')}</TableCell>
+                                        <TableCell>{req.reason}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Badge variant={
+                                                req.status === 'Approved' ? 'default' 
+                                                : req.status === 'Pending' ? 'secondary'
+                                                : 'destructive'
+                                            } className={req.status === 'Approved' ? 'bg-success' : req.status === 'Pending' ? 'bg-pending text-pending-foreground': ''}>
+                                                {req.status}
+                                            </Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    ) : (
+                        <div className="text-center py-12 text-muted-foreground">
+                            You have no pending requests. Use the buttons above to apply for leave or regularize your attendance.
+                        </div>
+                    )}
                 </CardContent>
             </Card>
             <WeeklyWellnessPulse />

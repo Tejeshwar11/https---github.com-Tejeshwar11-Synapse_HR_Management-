@@ -9,7 +9,6 @@ import { format, parseISO } from 'date-fns';
 
 
 import type { AttendanceRecord, Employee } from "@/lib/types";
-import { AppSidebar } from "./app-sidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Button } from "../ui/button";
@@ -24,6 +23,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { HrSidebar } from './hr-sidebar';
 
 interface DetailedEmployeeProfileProps {
   employee: Employee;
@@ -201,24 +202,40 @@ export function DetailedEmployeeProfile({ employee }: DetailedEmployeeProfilePro
         fill: employee.flightRisk && employee.flightRisk.score > 70 ? 'hsl(var(--warning))' : 'hsl(var(--primary))',
       },
   ];
+  
+  const subtitle = employee.flightRisk ? 
+    `${employee.role} • Flight Risk: ${employee.flightRisk.score}% (${employee.flightRisk.score > 70 ? 'High' : 'Low'})` 
+    : employee.role;
+
 
   return (
-    <div className="flex min-h-screen w-full">
-      <AppSidebar userRole="hr" employee={mockFatimaAlJamil} />
-      <div className="flex flex-col flex-1">
-        <header className="sticky top-0 z-30 flex h-auto items-start gap-4 border-b bg-background px-4 py-4 sm:static sm:border-0 sm:bg-transparent sm:px-6">
-            <Avatar className="h-20 w-20">
-                <AvatarImage src={employee.avatarUrl} alt={employee.name} data-ai-hint="person portrait" />
-                <AvatarFallback>{employee.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <div>
-                <h1 className="text-3xl">{employee.name}</h1>
-                <p className="text-slate-gray">{employee.role}</p>
-                <p className="text-sm text-slate-gray/70">{employee.department}</p>
-            </div>
+    <div className="flex min-h-screen w-full bg-muted/40">
+      <HrSidebar employee={mockFatimaAlJamil} />
+      <div className="flex flex-col flex-1 sm:pl-14">
+        <header className="sticky top-0 z-10 flex h-auto items-start gap-4 border-b bg-background px-4 py-4 sm:px-6 sm:py-6">
+           <div className='relative w-full rounded-lg overflow-hidden p-6 min-h-[160px] flex items-end'>
+                <Image
+                    src="https://images.unsplash.com/photo-1531875456248-975055b4044b?q=80&w=2832&auto=format&fit=crop"
+                    alt="Profile header background"
+                    fill
+                    className="object-cover"
+                    data-ai-hint="abstract texture"
+                />
+                <div className='absolute inset-0 bg-gradient-to-t from-black/60 to-black/10'></div>
+                <div className="flex items-center gap-4 relative">
+                    <Avatar className="h-20 w-20 border-4 border-background">
+                        <AvatarImage src={employee.avatarUrl} alt={employee.name} data-ai-hint="person portrait" />
+                        <AvatarFallback>{employee.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className='text-white'>
+                        <h1 className="text-3xl font-bold">{employee.name}</h1>
+                        <p className="text-white/80">{subtitle}</p>
+                    </div>
+                </div>
+           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:px-6 sm:py-0 space-y-6">
+        <main className="flex-1 p-4 sm:px-6 sm:py-0 space-y-6 mb-6">
             <Tabs defaultValue="overview">
                 <TabsList>
                     <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -255,17 +272,26 @@ export function DetailedEmployeeProfile({ employee }: DetailedEmployeeProfilePro
                                 
                                 <div>
                                     <h4 className="font-semibold text-charcoal mb-2">Contributing Factors</h4>
-                                    <ul className="space-y-2 text-sm text-slate-gray text-left">
-                                        {employee.flightRisk?.contributingFactors.map((factor, i) => (
-                                            <li key={i} className="flex items-center gap-2">
-                                                {factor.startsWith('↓') ? <TrendingDown className="h-4 w-4 text-destructive" /> : <TrendingUp className="h-4 w-4 text-success" />}
-                                                <span>{factor.substring(2)}</span>
-                                            </li>
-                                        ))}
-                                         {!employee.flightRisk && (
-                                            <p className="text-center text-slate-gray">No significant flight risk factors identified.</p>
-                                        )}
-                                    </ul>
+                                    <TooltipProvider>
+                                        <ul className="space-y-2 text-sm text-slate-gray text-left">
+                                            {employee.flightRisk?.contributingFactors.map((factor, i) => (
+                                                <Tooltip key={i}>
+                                                    <TooltipTrigger asChild>
+                                                        <li className="flex items-center gap-2 cursor-help">
+                                                            {factor.startsWith('↓') ? <TrendingDown className="h-4 w-4 text-destructive" /> : <TrendingUp className="h-4 w-4 text-success" />}
+                                                            <span>{factor.substring(2)}</span>
+                                                        </li>
+                                                    </TooltipTrigger>
+                                                     <TooltipContent>
+                                                        <p>This employee's time in designated collaborative zones has decreased by 30% this quarter.</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            ))}
+                                            {!employee.flightRisk && (
+                                                <p className="text-center text-slate-gray">No significant flight risk factors identified.</p>
+                                            )}
+                                        </ul>
+                                    </TooltipProvider>
                                 </div>
                             </CardContent>
                         </Card>
