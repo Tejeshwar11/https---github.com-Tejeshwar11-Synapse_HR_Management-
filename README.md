@@ -1,16 +1,16 @@
 Synapse: Intelligent HR Management System
 Smarter Attendance. Stronger Engagement. Seamless HR.
 
+
 Synapse is an intelligent, AI-powered workforce management platform that moves beyond traditional HR systems. It leverages predictive analytics and a world-class user experience to help companies proactively manage employee engagement and reduce attrition.
 
-📸 Screenshots
-Login Page	Employee Dashboard	HR Command Center
+**Features**
 
-Export to Sheets
-🌟 Features
 Synapse provides two distinct, role-based interfaces designed to empower every member of the organization.
 
-🧑‍💻 Employee Experience Platform
+
+**1. Employee Experience Platform**
+   
 Secure Authentication: Role-based login system for Employees and HR.
 
 Dynamic Dashboard: A personalized hub with smart attendance, gamified metrics (Perfect Streak), and a unique Collaboration Index.
@@ -27,7 +27,9 @@ AI Assistant: The Synapse Assistant chatbot provides instant answers and helps a
 
 History: A 3-year interactive attendance calendar and a page to track personal goals (OKRs).
 
-🏢 HR Strategic Command Center
+
+**2. HR Strategic Command Center**
+
 Central Dashboard: A real-time "Workforce Pulse" with live organizational stats.
 
 Predictive Flight Risk: An AI-driven Hotlist that identifies at-risk employees and their contributing factors.
@@ -40,16 +42,20 @@ Automated Workflows: Trackers for streamlining Onboarding & Offboarding processe
 
 AI Co-Pilot: The Synapse Co-Pilot chatbot answers complex data queries and generates actionable AI Growth Plans for managers.
 
-🛠 Technology Stack
-Category	Technology
-Frontend	Next.js, React, TypeScript, Tailwind CSS, ShadCN
-Backend	Node.js, Express.js, JWT Authentication
-Database	Firebase Firestore (NoSQL)
-AI & Innovation	Google Gemini API
-Deployment	Firebase Hosting, Google Cloud Platform (GCP)
 
-Export to Sheets
-🚀 Setup & Installation
+**Technology Stack :**
+
+Frontend  :	Next.js, React, TypeScript, Tailwind CSS, ShadCN
+
+Backend  :	Node.js, Express.js, JWT Authentication
+
+Database	:  Firebase Firestore (NoSQL)
+
+Deployment :	Firebase Hosting
+
+
+Setup & Installation :
+
 To get a local copy up and running, follow these steps.
 
 Prerequisites:
@@ -84,13 +90,13 @@ Access the Application:
 
 Open your browser and navigate to http://localhost:3000
 
-🔑 Login Credentials for Demo
-Role	Email	Password	Note
+Login Credentials for Demo :
+
+Role	              Email	               Password	            Note
 Employee	priya.sharma@synapse.com	SynapseEng@2025	A standard employee profile.
-Employee	david.chen@synapse.com	ResearchDev!99	High Flight Risk example.
+
 HR/Admin	fatima.clark@synapse.com	HumanRes!Lead01	Full administrative access.
 
-Export to Sheets
 ⚙ API Endpoints
 The backend follows a RESTful API structure.
 
@@ -116,5 +122,6 @@ AI Co-Pilot:
 
 POST /api/ai/generate-growth-plan - Generate a strategic plan for an employee.
 
-🏆 Hackathon Context
-This project was built in 48 hours for the Brandverse Hackathon Challenge 2025 (20th–21st September). It is our solution to Problem Statement 3: Intelligent HR Management System.
+**Hackathon Context :**
+
+Our project "SYNAPSE" was built in 48 hours for the Brandverse Hackathon Challenge 2025 (20th–21st September). It is our solution to Problem Statement 3: Intelligent HR Management System.
