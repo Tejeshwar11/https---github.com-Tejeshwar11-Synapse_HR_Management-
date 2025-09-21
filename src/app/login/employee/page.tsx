@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useWifi } from "@/lib/hooks/use-wifi";
-import { User, Wifi, WifiOff } from "lucide-react";
+import { User, Wifi, WifiOff, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -21,6 +21,8 @@ export default function EmployeeLoginPage() {
         router.push('/employee');
     }
 
+    const wifiStatusKnown = isConnected !== null;
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
       <Card className="w-full max-w-sm">
@@ -32,7 +34,7 @@ export default function EmployeeLoginPage() {
           <CardDescription>Enter your credentials to access your dashboard.</CardDescription>
         </CardHeader>
         <CardContent>
-          {!isConnected && (
+          {wifiStatusKnown && !isConnected && (
               <Alert variant="destructive" className="mb-4">
                 <WifiOff className="h-4 w-4" />
                 <AlertTitle>Wi-Fi Not Detected</AlertTitle>
@@ -41,6 +43,12 @@ export default function EmployeeLoginPage() {
                 </AlertDescription>
               </Alert>
             )}
+          {!wifiStatusKnown && (
+              <div className="flex items-center justify-center p-4 mb-4 rounded-md bg-muted text-muted-foreground">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Checking Wi-Fi connection...
+              </div>
+          )}
           <form className="space-y-4" onSubmit={handleLogin}>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -51,7 +59,7 @@ export default function EmployeeLoginPage() {
               <Input id="password" type="password" required />
             </div>
             <Button type="submit" className="w-full" disabled={!isConnected}>
-              { isConnected ? 'Login' : 'Login Disabled' }
+              { !wifiStatusKnown ? 'Checking Status...' : isConnected ? 'Login' : 'Login Disabled' }
             </Button>
           </form>
            <div className="mt-4 text-center text-sm">

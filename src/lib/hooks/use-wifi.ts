@@ -4,11 +4,13 @@
 import { useState, useCallback, useEffect } from 'react';
 
 export function useWifi() {
-  const [isConnected, setIsConnected] = useState(true);
+  const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const [disconnectCount, setDisconnectCount] = useState(0);
 
-  // Reset disconnect count at the start of a new day (client-side)
   useEffect(() => {
+    // Set initial state on the client after hydration
+    setIsConnected(true);
+
     const today = new Date().toDateString();
     const lastReset = localStorage.getItem('wifiDisconnectResetDay');
     if (lastReset !== today) {
