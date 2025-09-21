@@ -1,28 +1,51 @@
-import type { Employee, HrAdmin, LeaveRequest, AttendanceRecord, RequestStatus } from '@/lib/types';
-import { subDays, format, addDays, parseISO } from 'date-fns';
+import type { Employee, HrAdmin, LeaveRequest, AttendanceRecord, RequestStatus, Kudos, Goal, JobOpening, WellnessStat, Skill, Workflow, Department } from '@/lib/types';
+import { subDays, format, addDays, parseISO, startOfQuarter, endOfQuarter, eachDayOfInterval } from 'date-fns';
 
 // --- DATA POOLS FOR GENERATION ---
-export const DEPARTMENTS = [
-  'Quantum Computing R&D',
-  'Fusion Engineering',
-  'Bio-Synth Division',
-  'AI Ethics & Governance',
-  'Robotics Field Operations',
+const DEPARTMENTS: Department[] = [
+  'Engineering',
+  'Sales',
   'Marketing',
-  'Finance & Accounting',
+  'R&D',
+  'HR',
 ];
 
 const FIRST_NAMES = ['Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Reyansh', 'Ayaan', 'Krishna', 'Ishaan', 'Ananya', 'Diya', 'Saanvi', 'Aadhya', 'Pari', 'Riya', 'Myra', 'Aarohi', 'Isha', 'Prisha', 'Liam', 'Olivia', 'Noah', 'Emma', 'Oliver', 'Ava', 'Elijah', 'Charlotte', 'William', 'Sophia', 'James', 'Isabella', 'Benjamin', 'Mia', 'Lucas', 'Amelia', 'Henry', 'Harper', 'Alexander', 'Evelyn', 'Priya', 'David', 'Fatima', 'Chen', 'Al-Jamil', 'Sharma'];
 const LAST_NAMES = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin', 'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez', 'Clark', 'Lewis', 'Robinson', 'Walker', 'Gupta', 'Wang', 'Khan', 'Patel'];
 
-const ROLES_BY_DEPT: Record<string, string[]> = {
-    'Quantum Computing R&D': ['Lead Research Scientist', 'Quantum Theorist', 'Research Associate', 'Lab Manager'],
-    'Fusion Engineering': ['Lead Fusion Engineer', 'Plasma Physicist', 'Materials Scientist', 'Control Systems Engineer'],
-    'Bio-Synth Division': ['Senior Geneticist', 'Bio-informatics Specialist', 'Lab Technician', 'Research Lead'],
-    'AI Ethics & Governance': ['AI Ethicist', 'Policy Analyst', 'Compliance Officer', 'Data Privacy Manager'],
-    'Robotics Field Operations': ['Senior Robotics Engineer', 'Field Technician', 'Drone Operator', 'Operations Lead'],
-    'Marketing': ['Marketing Director', 'Content Strategist', 'Digital Marketer', 'Brand Manager'],
-    'Finance & Accounting': ['Senior Accountant', 'Financial Analyst', 'Controller', 'Payroll Specialist'],
+const ROLES_BY_DEPT: Record<Department, { Junior: string[], Associate: string[], Senior: string[], Lead: string[], Manager: string[] }> = {
+    'Engineering': { Junior: ['Junior Software Engineer'], Associate: ['Software Engineer'], Senior: ['Senior Software Engineer'], Lead: ['Tech Lead'], Manager: ['Engineering Manager'] },
+    'Sales': { Junior: ['Sales Development Rep'], Associate: ['Account Executive'], Senior: ['Senior Account Executive'], Lead: ['Team Lead, Sales'], Manager: ['Sales Manager'] },
+    'Marketing': { Junior: ['Marketing Coordinator'], Associate: ['Marketing Associate'], Senior: ['Senior Marketing Associate'], Lead: ['Marketing Lead'], Manager: ['Marketing Manager'] },
+    'R&D': { Junior: ['Research Assistant'], Associate: ['Research Scientist'], Senior: ['Senior Research Scientist'], Lead: ['Lead Scientist'], Manager: ['R&D Manager'] },
+    'HR': { Junior: ['HR Coordinator'], Associate: ['HR Generalist'], Senior: ['Senior HR Business Partner'], Lead: ['HR Lead'], Manager: ['HR Manager'] },
+};
+
+const SKILLS_BY_DEPT: Record<Department, string[]> = {
+  'Engineering': ['React', 'Node.js', 'Python', 'Go', 'Kubernetes', 'AWS', 'SQL', 'System Design'],
+  'Sales': ['Salesforce', 'Negotiation', 'Lead Generation', 'CRM', 'Closing', 'Communication'],
+  'Marketing': ['SEO', 'Content Marketing', 'Google Analytics', 'Email Marketing', 'Social Media'],
+  'R&D': ['Data Analysis', 'Python', 'Machine Learning', 'Statistics', 'MATLAB', 'C++'],
+  'HR': ['Recruiting', 'Employee Relations', 'Onboarding', 'Compensation', 'HRIS', 'Labor Law'],
+}
+
+const OKR_EXAMPLES: Record<Department, { objective: string, keyResults: string[] }[]> = {
+    'Engineering': [
+        { objective: 'Refactor authentication module', keyResults: ['Reduce latency by 20%', 'Achieve 99.9% uptime', 'Update documentation'] },
+        { objective: 'Launch new feature X', keyResults: ['Complete code development', 'Pass all QA tests', 'Deploy to production'] },
+    ],
+    'Sales': [
+        { objective: 'Exceed Q4 lead generation target by 10%', keyResults: ['Generate 150 new MQLs', 'Achieve a 20% conversion rate', 'Book 30 product demos'] },
+    ],
+    'Marketing': [
+        { objective: 'Increase organic traffic by 15%', keyResults: ['Publish 12 new blog posts', 'Improve top 10 keyword rankings', 'Acquire 20 new backlinks'] },
+    ],
+    'R&D': [
+        { objective: 'Validate new research hypothesis', keyResults: ['Complete literature review', 'Run 50 simulations', 'Publish findings in a preliminary report'] },
+    ],
+    'HR': [
+        { objective: 'Improve new hire onboarding experience', keyResults: ['Reduce time-to-productivity by 10%', 'Achieve a 95% satisfaction score', 'Automate 3 manual onboarding tasks'] },
+    ],
 };
 
 const FLIGHT_RISK_FACTORS = [
@@ -33,55 +56,51 @@ const FLIGHT_RISK_FACTORS = [
     '↑ Increase in after-hours work',
 ];
 
-const LEAVE_REASONS = ['Family vacation', 'Medical appointment', 'Personal reasons', 'Conference attendance', 'Sick leave', 'Maternity/Paternity leave', 'Jury duty'];
+const LEAVE_REASONS = ['Family vacation', 'Medical appointment', 'Personal reasons', 'Conference attendance', 'Sick leave'];
+const KUDOS_MESSAGES = [
+    "for always being a team player!", "for their amazing problem-solving skills on the latest project.", "for going above and beyond to help out.", "for their incredible presentation skills.", "for being a great mentor.", "for their positive attitude and energy."
+]
 
 // --- UTILITY FUNCTIONS ---
-
-// Consistent random number generation based on a seed (employee ID)
 const seededRandom = (seed: number) => {
     const x = Math.sin(seed) * 10000;
     return x - Math.floor(x);
 };
 
-// Generate attendance for the last 90 days, including today.
 const generateAttendanceHistory = (employeeId: string): AttendanceRecord[] => {
     const history: AttendanceRecord[] = [];
     const today = new Date();
     const seed = parseInt(employeeId, 10);
+    const interval = { start: subDays(today, 89), end: today };
     
-    // Generate for the last 89 days + today (total 90 days)
-    for (let i = 89; i >= 0; i--) {
-        const date = subDays(today, i);
+    eachDayOfInterval(interval).forEach(date => {
         const dayOfWeek = date.getDay();
-        
-        if (dayOfWeek === 0 || dayOfWeek === 6) continue; // Skip weekends
+        if (dayOfWeek === 0 || dayOfWeek === 6) return;
 
         const random = seededRandom(seed + date.getDate() * (date.getMonth() + 1));
         let status: AttendanceRecord['status'];
         
-        // More realistic distribution
-        if (random < 0.94) status = 'present';    // 94% chance of being present
-        else if (random < 0.98) status = 'on-leave'; // 4% chance of being on leave
-        else if (random < 0.995) status = 'half-day'; // 1.5% chance of half-day
-        else status = 'absent';       // 0.5% chance of being absent
+        if (random < 0.94) status = 'present';
+        else if (random < 0.98) status = 'on-leave';
+        else if (random < 0.995) status = 'half-day';
+        else status = 'absent';
         
         history.push({ date: format(date, 'yyyy-MM-dd'), status });
-    }
+    });
     
     return history.sort((a, b) => b.date.localeCompare(a.date));
 };
 
-// Generate some leave requests
+
 const generateLeaveRequests = (employeeId: string, attendance: AttendanceRecord[]): LeaveRequest[] => {
     const requests: LeaveRequest[] = [];
     const onLeaveDays = attendance.filter(a => a.status === 'on-leave');
     const seed = parseInt(employeeId, 10);
     
     for (let i = 0; i < onLeaveDays.length && i < 5; i++) {
-        // Don't create requests for all leaves to add realism
         if (seededRandom(seed + i * 10) > 0.5) {
             const startDate = parseISO(onLeaveDays[i].date);
-            const endDate = addDays(startDate, Math.floor(seededRandom(seed + i * 20) * 3)); // 0-3 days duration
+            const endDate = addDays(startDate, Math.floor(seededRandom(seed + i * 20) * 3));
             
             const randomStatus = seededRandom(seed + i * 30);
             let status: RequestStatus;
@@ -102,117 +121,146 @@ const generateLeaveRequests = (employeeId: string, attendance: AttendanceRecord[
     return requests;
 };
 
-
 // --- MAIN DATA GENERATION ---
 
 let allEmployees: Employee[] = [];
 let currentId = 101;
+const totalEmployees = 1000;
 
-const deptCounts: Record<string, number> = {
-    'Quantum Computing R&D': 150,
-    'Fusion Engineering': 180,
-    'Bio-Synth Division': 160,
-    'AI Ethics & Governance': 120,
-    'Robotics Field Operations': 200,
-    'Marketing': 90,
-    'Finance & Accounting': 100,
-};
+for (let i = 0; i < totalEmployees; i++) {
+    const id = `${currentId + i}`;
+    const seed = parseInt(id, 10);
+    
+    const department = DEPARTMENTS[Math.floor(seededRandom(seed) * DEPARTMENTS.length)];
+    const roleKeys = Object.keys(ROLES_BY_DEPT[department]);
+    const roleCategory = roleKeys[Math.floor(seededRandom(seed+1) * roleKeys.length)] as keyof typeof ROLES_BY_DEPT[Department];
+    const role = ROLES_BY_DEPT[department][roleCategory][0];
 
-for (const dept in deptCounts) {
-    const count = deptCounts[dept];
-    for (let i = 0; i < count; i++) {
-        const id = `${currentId + i}`;
-        const seed = parseInt(id, 10);
-        
-        const firstName = FIRST_NAMES[Math.floor(seededRandom(seed) * FIRST_NAMES.length)];
-        const lastName = LAST_NAMES[Math.floor(seededRandom(seed + 1) * LAST_NAMES.length)];
-        const roles = ROLES_BY_DEPT[dept] || ['Associate'];
-        const role = roles[Math.floor(seededRandom(seed + 2) * roles.length)];
-        const isHighRisk = seededRandom(seed + 3) < 0.15;
+    const firstName = FIRST_NAMES[Math.floor(seededRandom(seed + 2) * FIRST_NAMES.length)];
+    const lastName = LAST_NAMES[Math.floor(seededRandom(seed + 3) * LAST_NAMES.length)];
+    const isHighRisk = seededRandom(seed + 4) < 0.1;
 
-        const attendance = generateAttendanceHistory(id);
-        const requests = generateLeaveRequests(id, attendance);
-        const usedLeave = requests.filter(r => r.status === 'Approved').length;
-        const halfDays = attendance.filter(a => a.status === 'half-day').length;
-        
-        const todaysAttendance = attendance.find(a => a.date === format(new Date(), 'yyyy-MM-dd'));
+    const attendance = generateAttendanceHistory(id);
+    const requests = generateLeaveRequests(id, attendance);
+    const usedLeave = requests.filter(r => r.status === 'Approved').length;
+    const halfDays = attendance.filter(a => a.status === 'half-day').length;
+    
+    const employeeSkills = SKILLS_BY_DEPT[department] || [];
+    const skills = [...new Set(Array.from({ length: Math.floor(seededRandom(seed+5)*3)+2 }, () => employeeSkills[Math.floor(seededRandom(Date.now()+Math.random()) * employeeSkills.length)]))];
 
-        allEmployees.push({
-            id,
-            name: `${firstName} ${lastName}`,
-            role,
-            department: dept,
-            avatarUrl: `https://picsum.photos/seed/${id}/150/150`,
-            email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${id}@synapse.corp`,
-            halfDays: halfDays,
-            stats: {
-                leaveBalance: { used: usedLeave, total: 20 },
-                perfectStreak: Math.floor(seededRandom(seed + 5) * 80),
-                collaborationIndex: parseFloat((seededRandom(seed + 6) * 4 + 6).toFixed(1)),
-            },
-            requests,
-            attendance,
-            flightRisk: isHighRisk ? {
-                score: Math.floor(seededRandom(seed + 7) * 30) + 70,
-                contributingFactors: [...new Set(Array.from({ length: Math.floor(seededRandom(seed+8) * 3) + 1 }, () => FLIGHT_RISK_FACTORS[Math.floor(seededRandom(Date.now() + Math.random()) * FLIGHT_RISK_FACTORS.length)]))],
-            } : undefined,
-            presence: {
-                status: todaysAttendance?.status === 'on-leave' ? 'On Leave' : 'In Office',
-                location: 'Engineering Wing'
-            },
-            analytics: {
-                presenceHeatmapUrl: '/heatmap-placeholder.png'
-            }
-        });
-    }
-    currentId += count;
+    const okrTemplate = OKR_EXAMPLES[department][Math.floor(seededRandom(seed+6) * OKR_EXAMPLES[department].length)];
+    const goals: Goal[] = [{
+        id: `goal-${id}-1`,
+        title: okrTemplate.objective,
+        keyResults: okrTemplate.keyResults.map((kr, idx) => ({
+            id: `kr-${id}-1-${idx}`,
+            description: kr,
+            progress: Math.floor(seededRandom(seed+7+idx) * 70) + 20,
+        }))
+    }];
+
+    allEmployees.push({
+        id,
+        name: `${firstName} ${lastName}`,
+        role,
+        department,
+        avatarUrl: `https://picsum.photos/seed/${id}/150/150`,
+        email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${id}@synapse.corp`,
+        halfDays: halfDays,
+        stats: {
+            leaveBalance: { used: usedLeave, total: 20 },
+            perfectStreak: Math.floor(seededRandom(seed + 8) * 80),
+            collaborationIndex: parseFloat((seededRandom(seed + 9) * 4 + 6).toFixed(1)),
+        },
+        requests,
+        attendance,
+        skills,
+        goals,
+        kudos: [], // Will be populated later
+        flightRisk: isHighRisk ? {
+            score: Math.floor(seededRandom(seed + 10) * 30) + 70,
+            contributingFactors: [...new Set(Array.from({ length: 2 }, () => FLIGHT_RISK_FACTORS[Math.floor(seededRandom(Date.now() + Math.random()) * FLIGHT_RISK_FACTORS.length)]))],
+        } : undefined,
+    });
 }
 
-// --- SPECIFIC MOCK USERS ---
+// Generate Kudos Feed
+export const mockKudos: Kudos[] = Array.from({length: 20}).map((_, i) => {
+    const sender = allEmployees[Math.floor(Math.random() * totalEmployees)];
+    const receiver = allEmployees[Math.floor(Math.random() * totalEmployees)];
+    const message = KUDOS_MESSAGES[Math.floor(Math.random() * KUDOS_MESSAGES.length)];
+    const kudosItem: Kudos = {
+        id: `kudo-${Date.now()}-${i}`,
+        from: sender.name,
+        fromAvatar: sender.avatarUrl,
+        to: receiver.name,
+        message: `${receiver.name}, thank you ${message}`,
+        timestamp: subDays(new Date(), Math.floor(Math.random() * 10)).toISOString(),
+    };
+    // Add to receiver's kudos list
+    const receiverEmployee = allEmployees.find(e => e.id === receiver.id);
+    if(receiverEmployee) receiverEmployee.kudos.push(kudosItem);
+    return kudosItem;
+});
 
-const priyaSharmaData = allEmployees.find(e => e.name.includes('Priya')) || allEmployees[0];
+// Generate Internal Openings
+export const mockInternalOpenings: JobOpening[] = [
+    { id: 'job-1', title: 'Senior Software Engineer', department: 'Engineering', location: 'Remote' },
+    { id: 'job-2', title: 'Marketing Manager', department: 'Marketing', location: 'New York' },
+    { id: 'job-3', title: 'Data Scientist', department: 'R&D', location: 'San Francisco' },
+    { id: 'job-4', title: 'Senior Account Executive', department: 'Sales', location: 'Remote' },
+    { id: 'job-5', title: 'HR Business Partner', department: 'HR', location: 'New York' },
+];
+
+// Generate Wellness Data
+export const mockWellnessData: WellnessStat[] = Array.from({length: 6}).map((_, i) => ({
+    month: format(subDays(new Date(), (5-i)*30), 'MMM'),
+    score: Math.floor(Math.random() * 15) + 75 - (i === 4 ? 10 : 0) // dip at the end of a quarter
+}));
+
+// Generate Workflows
+export const mockWorkflows: Workflow[] = [
+    { id: 'wf-1', type: 'Onboarding', employeeName: 'Sarah Lee', status: 'In Progress', currentStep: 'IT Setup', completion: 40 },
+    { id: 'wf-2', type: 'Offboarding', employeeName: 'John Doe', status: 'Completed', currentStep: 'Exit Interview', completion: 100 },
+    { id: 'wf-3', type: 'Onboarding', employeeName: 'Mike Chen', status: 'Pending', currentStep: 'Create Accounts', completion: 10 },
+    { id: 'wf-4', type: 'Offboarding', employeeName: 'Lisa Ray', status: 'In Progress', currentStep: 'Knowledge Transfer', completion: 75 },
+    { id: 'wf-5',
+        type: 'Onboarding',
+        employeeName: 'Tom Baker',
+        status: 'In Progress',
+        currentStep: 'Team Introduction',
+        completion: 60
+    },
+];
+
+// --- SPECIFIC MOCK USERS ---
+const priyaSharmaData = allEmployees.find(e => e.department === 'Engineering' && e.role === 'Tech Lead') || allEmployees[0];
 const priyaSharma: Employee = {
     ...priyaSharmaData,
     id: '282',
     name: 'Priya Sharma',
-    role: 'Lead Fusion Engineer',
-    department: 'Fusion Engineering',
+    role: 'Tech Lead',
+    department: 'Engineering',
     avatarUrl: `https://picsum.photos/seed/282/150/150`,
     email: 'priya.sharma@synapse.corp',
-    halfDays: 2,
-    stats: {
-        leaveBalance: { used: 5, total: 20 },
-        perfectStreak: 42,
-        collaborationIndex: 7.8,
-    },
-    requests: [
-        { id: 'req-priya-1', type: 'leave', startDate: format(subDays(new Date(), 20), 'yyyy-MM-dd'), endDate: format(subDays(new Date(), 18), 'yyyy-MM-dd'), status: 'Approved', reason: 'Family vacation' },
-        { id: 'req-priya-2', type: 'regularization', startDate: format(subDays(new Date(), 45), 'yyyy-MM-dd'), endDate: format(subDays(new Date(), 45), 'yyyy-MM-dd'), status: 'Approved', reason: 'Forgot to punch in' },
-        { id: 'req-priya-3', type: 'leave', startDate: format(addDays(new Date(), 10), 'yyyy-MM-dd'), endDate: format(addDays(new Date(), 15), 'yyyy-MM-dd'), status: 'Pending', reason: 'Conference' },
-    ],
-    attendance: generateAttendanceHistory('282'),
-    presence: { status: 'In Office', location: 'Fusion Control Room' },
 };
 
-const davidChenData = allEmployees.find(e => e.name.includes('David')) || allEmployees[1];
+const davidChenData = allEmployees.find(e => e.department === 'R&D' && e.flightRisk) || allEmployees[1];
 const davidChen: Employee = {
     ...davidChenData,
     id: '102',
     name: 'David Chen',
-    role: 'Lead Research Scientist',
-    department: 'Quantum Computing R&D',
+    role: 'Senior Research Scientist',
+    department: 'R&D',
     avatarUrl: `https://picsum.photos/seed/102/150/150`,
     email: 'david.chen@synapse.corp',
-    stats: { ...davidChenData.stats, collaborationIndex: 6.8 },
     flightRisk: {
         score: 78,
         contributingFactors: [
             '↓ Decreased time in collaboration zones',
             '↑ Increased short-notice leaves',
-            '↓ Below target Collaboration Index',
         ],
     },
-    attendance: generateAttendanceHistory('102'),
 };
 
 const fatimaAlJamil: HrAdmin = {
@@ -232,7 +280,6 @@ const findAndReplace = (employee: Employee) => {
 };
 findAndReplace(priyaSharma);
 findAndReplace(davidChen);
-
 
 // --- EXPORTS ---
 export const mockEmployees = allEmployees;

@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Loader2, Send, User, Bot } from 'lucide-react';
+import { Loader2, Send, User, Bot, Sparkles } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { employeeChatbot } from '@/ai/flows/employee-chatbot';
@@ -30,17 +30,14 @@ export function EmployeeChatbot({ employee }: EmployeeChatbotProps) {
         setInput(e.target.value);
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!input.trim()) return;
-
-        const userMessage: ChatMessage = { role: 'user', content: input };
+    const callChatbot = async (query: string) => {
+        const userMessage: ChatMessage = { role: 'user', content: query };
         setMessages(prev => [...prev, userMessage]);
         setInput('');
         setIsLoading(true);
 
         try {
-            const botResponse = await employeeChatbot({ query: input, employee });
+            const botResponse = await employeeChatbot({ query: query, employee });
             const botMessage: ChatMessage = { role: 'bot', content: botResponse };
             setMessages(prev => [...prev, botMessage]);
         } catch (error) {
@@ -49,7 +46,18 @@ export function EmployeeChatbot({ employee }: EmployeeChatbotProps) {
         } finally {
             setIsLoading(false);
         }
+    }
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!input.trim()) return;
+        callChatbot(input);
     };
+
+    const handleSelfReview = () => {
+        const query = "Draft My Performance Self-Review";
+        callChatbot(query);
+    }
 
     useEffect(() => {
         if (scrollAreaRef.current) {
@@ -62,14 +70,20 @@ export function EmployeeChatbot({ employee }: EmployeeChatbotProps) {
 
 
     return (
-        <Card className="w-full h-[70vh] flex flex-col">
-            <CardHeader>
+        <Card className="w-full h-full flex flex-col border-0 shadow-none rounded-none">
+            <CardHeader className='border-b'>
                 <CardTitle>AI Assistant</CardTitle>
                 <CardDescription>Ask me questions about your attendance, leave, and more.</CardDescription>
             </CardHeader>
-            <CardContent className="flex-grow overflow-hidden">
+            <CardContent className="flex-grow overflow-hidden p-4">
                 <ScrollArea className="h-full" ref={scrollAreaRef}>
                     <div className="space-y-4 pr-4">
+                         {messages.length === 0 && (
+                            <div className='flex flex-col items-center justify-center h-full text-center text-muted-foreground'>
+                                <Sparkles className='h-10 w-10 mb-2'/>
+                                <p>You can ask things like "What's my leave balance?" or "What's the status of my last request?"</p>
+                            </div>
+                         )}
                         {messages.map((message, index) => (
                             <div key={index} className={cn("flex items-start gap-3", message.role === 'user' ? 'justify-end' : 'justify-start')}>
                                 {message.role === 'bot' && (
@@ -77,7 +91,7 @@ export function EmployeeChatbot({ employee }: EmployeeChatbotProps) {
                                         <AvatarFallback><Bot /></AvatarFallback>
                                     </Avatar>
                                 )}
-                                <div className={cn("rounded-lg p-3 max-w-sm", message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
+                                <div className={cn("rounded-lg p-3 max-w-sm whitespace-pre-wrap", message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
                                     <p className="text-sm">{message.content}</p>
                                 </div>
                                 {message.role === 'user' && (
@@ -102,7 +116,10 @@ export function EmployeeChatbot({ employee }: EmployeeChatbotProps) {
                     </div>
                 </ScrollArea>
             </CardContent>
-            <CardFooter>
+            <CardFooter className='flex-col items-start gap-2 border-t pt-4'>
+                 <Button variant="outline" size="sm" onClick={handleSelfReview} disabled={isLoading}>
+                    <Sparkles className='mr-2 h-4 w-4'/> Draft My Performance Self-Review
+                </Button>
                 <form onSubmit={handleSubmit} className="flex w-full items-center space-x-2">
                     <Input
                         id="message"

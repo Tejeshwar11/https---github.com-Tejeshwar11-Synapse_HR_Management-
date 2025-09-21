@@ -1,12 +1,17 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, a
+import { useState, useEffect } from "react";
 import {
   Flame,
   MessageCircle,
   TrendingDown,
   WifiOff,
+  Smile,
+  Frown,
+  Meh,
+  Award,
 } from "lucide-react";
 import {
   Pie,
@@ -31,34 +36,87 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { AppSidebar } from "./app-sidebar";
 import { LeaveRequestDialog } from "./leave-request-dialog";
+import { GiveKudosDialog } from "./give-kudos-dialog";
 import { EmployeeChatbot } from "./employee-chatbot";
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
 import { useWifi } from "@/lib/hooks/use-wifi";
 import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertTitle } from "../ui/alert";
+import { Alert, AlertTitle, AlertDescription } from "../ui/alert";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 
 const LiveClock = () => {
   const [time, setTime] = useState("");
 
   useEffect(() => {
-    // Set initial time on client-side to avoid hydration mismatch
     setTime(new Date().toLocaleTimeString());
-
     const timer = setInterval(() => {
       setTime(new Date().toLocaleTimeString());
     }, 1000);
-
-    return () => {
-      clearInterval(timer);
-    };
+    return () => clearInterval(timer);
   }, []);
   
-  if (!time) {
-      return null;
-  }
+  if (!time) return null;
 
   return <p className="font-mono text-sm text-slate-gray">{time}</p>;
+};
+
+const WeeklyWellnessPulse = () => {
+    const { toast } = useToast();
+    const [submitted, setSubmitted] = useState(false);
+
+    const handleSubmit = (sentiment: string) => {
+        setSubmitted(true);
+        toast({
+            title: "Thank you for your feedback!",
+            description: `You've reported your workload is ${sentiment}.`,
+        });
+    }
+
+    if (submitted) {
+        return (
+             <Card className="rounded-xl shadow-md">
+                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                    <Smile className="h-8 w-8 text-green-500 mb-2"/>
+                    <p className="text-sm font-medium text-charcoal">Thanks for sharing!</p>
+                    <p className="text-xs text-muted-foreground">Your feedback helps us improve.</p>
+                </CardContent>
+            </Card>
+        )
+    }
+
+    return (
+        <Card className="rounded-xl shadow-md">
+            <CardHeader className="p-4 pb-2">
+                <CardTitle className="text-base font-semibold">Weekly Wellness Pulse</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+                <p className="text-sm text-muted-foreground mb-3">How is your workload feeling this week?</p>
+                <TooltipProvider>
+                    <div className="flex justify-around">
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" onClick={() => handleSubmit('great')}><Smile className="h-7 w-7 text-green-500 hover:scale-110 transition-transform" /></Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Great</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" onClick={() => handleSubmit('manageable')}><Meh className="h-7 w-7 text-yellow-500 hover:scale-110 transition-transform" /></Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Manageable</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" onClick={() => handleSubmit('overwhelming')}><Frown className="h-7 w-7 text-red-500 hover:scale-110 transition-transform" /></Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Overwhelming</TooltipContent>
+                        </Tooltip>
+                    </div>
+                </TooltipProvider>
+            </CardContent>
+        </Card>
+    );
 };
 
 
@@ -101,7 +159,6 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
         employeeAvatar: employee.avatarUrl,
     };
     
-    // Simple logic: assume 1 day per request for leave balance update
     const isLeave = newRequest.type === 'leave';
     const startDate = parseISO(newRequest.startDate);
     const endDate = parseISO(newRequest.endDate);
@@ -158,7 +215,7 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
                           {isPunchedIn ? "Punch Out" : "Punch In"}
                         </Button>
                         <LeaveRequestDialog onNewRequest={handleNewRequest} />
-                        <Button variant="secondary" className="transition-transform hover:scale-105">Request Regularization</Button>
+                        <GiveKudosDialog />
                     </div>
                 </CardContent>
             </Card>
@@ -167,16 +224,17 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
               <Alert variant="destructive">
                 <WifiOff className="h-4 w-4" />
                 <AlertTitle>You are disconnected from the office Wi-Fi.</AlertTitle>
+                <AlertDescription>Further disconnections may result in a half-day being marked.</AlertDescription>
               </Alert>
             )}
 
-            <div className="grid gap-6 md:grid-cols-4">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="rounded-xl shadow-md">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-base font-semibold">Leave Balance</CardTitle>
                     </CardHeader>
                     <CardContent className="flex items-center justify-between">
-                        <div className="text-3xl font-bold text-charcoal">{remainingLeave} <span className="text-lg font-medium">Days Left</span></div>
+                        <div className="text-3xl font-bold text-charcoal">{remainingLeave} <span className="text-lg font-medium">Days</span></div>
                          <div className="h-20 w-20">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
@@ -210,7 +268,7 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
                         <CardTitle className="text-base font-semibold">Collaboration Index</CardTitle>
                     </CardHeader>
                     <CardContent className="flex items-center justify-between">
-                        <div className="text-3xl font-bold text-charcoal">{employee.stats.collaborationIndex} / 10</div>
+                        <div className="text-3xl font-bold text-charcoal">{employee.stats.collaborationIndex}/10</div>
                          <div className="h-20 w-20">
                            <ResponsiveContainer width="100%" height="100%">
                              <RadialBarChart
@@ -229,46 +287,48 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
                 </Card>
             </div>
             
-            <Card className="rounded-xl shadow-md">
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <CardTitle>My Recent Requests</CardTitle>
-                     <Button variant="destructive" size="sm" onClick={simulateDisconnect}>Simulate Wi-Fi Disconnect</Button>
-                  </div>
-                    <CardDescription>You have {employee.requests.filter(r => r.status === 'Pending').length} pending requests.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Type</TableHead>
-                                <TableHead>Dates</TableHead>
-                                <TableHead>Reason</TableHead>
-                                <TableHead className="text-right">Status</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {employee.requests.slice(0, 5).map((req) => (
-                                <TableRow key={req.id}>
-                                    <TableCell className="font-medium capitalize">{req.type}</TableCell>
-                                    <TableCell>{format(parseISO(req.startDate), 'd MMM')} - {format(parseISO(req.endDate), 'd MMM')}</TableCell>
-                                    <TableCell>{req.reason}</TableCell>
-                                    <TableCell className="text-right">
-                                        <Badge variant={
-                                            req.status === 'Approved' ? 'default' 
-                                            : req.status === 'Pending' ? 'secondary'
-                                            : 'destructive'
-                                        } className={req.status === 'Approved' ? 'bg-success' : req.status === 'Pending' ? 'bg-pending text-pending-foreground': ''}>
-                                            {req.status}
-                                        </Badge>
-                                    </TableCell>
+             <div className="grid gap-6 lg:grid-cols-3">
+                <Card className="rounded-xl shadow-md lg:col-span-2">
+                    <CardHeader>
+                      <div className="flex justify-between items-center">
+                        <CardTitle>My Recent Requests</CardTitle>
+                         <Button variant="destructive" size="sm" onClick={simulateDisconnect}>Simulate Wi-Fi Disconnect</Button>
+                      </div>
+                        <CardDescription>You have {employee.requests.filter(r => r.status === 'Pending').length} pending requests.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Type</TableHead>
+                                    <TableHead>Dates</TableHead>
+                                    <TableHead>Reason</TableHead>
+                                    <TableHead className="text-right">Status</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
-
+                            </TableHeader>
+                            <TableBody>
+                                {employee.requests.slice(0, 3).map((req) => (
+                                    <TableRow key={req.id}>
+                                        <TableCell className="font-medium capitalize">{req.type}</TableCell>
+                                        <TableCell>{format(parseISO(req.startDate), 'd MMM')} - {format(parseISO(req.endDate), 'd MMM')}</TableCell>
+                                        <TableCell>{req.reason}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Badge variant={
+                                                req.status === 'Approved' ? 'default' 
+                                                : req.status === 'Pending' ? 'secondary'
+                                                : 'destructive'
+                                            } className={req.status === 'Approved' ? 'bg-success' : req.status === 'Pending' ? 'bg-pending text-pending-foreground': ''}>
+                                                {req.status}
+                                            </Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+                <WeeklyWellnessPulse />
+            </div>
         </main>
       </div>
       <Sheet>
@@ -277,7 +337,7 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
                 <MessageCircle className="h-8 w-8"/>
             </Button>
         </SheetTrigger>
-        <SheetContent side="right" className="w-[400px] sm:w-[540px] p-0">
+        <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col">
              <EmployeeChatbot employee={employee}/>
         </SheetContent>
       </Sheet>

@@ -10,17 +10,18 @@ import {
   BrainCircuit,
   Users,
   LineChart,
-  FileText
+  FileText,
+  TrendingUp,
+  Award,
+  Target,
+  HeartPulse,
+  Briefcase,
+  CandlestickChart,
+  GitFork,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 
 interface AppSidebarProps {
@@ -42,13 +43,19 @@ export function AppSidebar({ userRole, employee }: AppSidebarProps) {
   const employeeNav = [
     { href: "/employee", label: "Dashboard", icon: Home },
     { href: "/employee/history", label: "My History", icon: Clock },
+    { href: "/employee/goals", label: "My Goals (OKRs)", icon: Target },
+    { href: "/employee/growth", label: "Growth Hub", icon: TrendingUp },
+    { href: "/employee/kudos", label: "Kudos Wall", icon: Award },
     { href: "/employee/team", label: "Team Calendar", icon: Calendar },
   ]
 
   const hrNav = [
     { href: "/hr", label: "Dashboard", icon: Home },
     { href: "/hr/directory", label: "Employee Directory", icon: Users },
-    { href: "/hr/analytics", label: "Analytics", icon: LineChart },
+    { href: "/hr/analytics", label: "Workforce Analytics", icon: LineChart },
+    { href: "/hr/sentiment", label: "Workforce Sentiment", icon: HeartPulse },
+    { href: "/hr/workflows", label: "Workflows", icon: GitFork },
+    { href: "/hr/headcount", label: "Headcount Planning", icon: Briefcase },
     { href: "/hr/reports", label: "Reports", icon: FileText },
   ]
 
@@ -62,14 +69,14 @@ export function AppSidebar({ userRole, employee }: AppSidebarProps) {
                   <span>Synapse</span>
               </Link>
           </div>
-          <nav className="flex-1 space-y-2 p-4">
+          <nav className="flex-1 space-y-1 p-4">
               {navItems.map((item) => (
                   <Link
                       key={item.label}
                       href={item.href}
                       className={cn(
                           "flex items-center gap-3 rounded-lg px-3 py-2 text-slate-gray transition-all hover:text-charcoal hover:bg-muted",
-                          pathname === item.href && "bg-muted text-charcoal"
+                          pathname === item.href && "bg-muted text-charcoal font-semibold"
                       )}
                   >
                       <item.icon className="h-4 w-4" />

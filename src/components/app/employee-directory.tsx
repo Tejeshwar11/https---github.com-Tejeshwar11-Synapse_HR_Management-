@@ -6,8 +6,10 @@ import {
   Users,
   Search,
   ChevronDown,
+  Sparkles
 } from "lucide-react";
 import { format } from "date-fns";
+import * as Popover from '@radix-ui/react-popover';
 
 import type { Employee } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -26,8 +28,34 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { DEPARTMENTS as departmentList } from "@/lib/data";
+import { Switch } from "../ui/switch";
+import { Label } from "../ui/label";
 
 const DEPARTMENTS = ["All", ...departmentList];
+
+const WordCloud = ({ skills, onSkillSelect }: { skills: { text: string, value: number }[], onSkillSelect: (skill: string) => void }) => {
+  // Basic word cloud styling for demonstration
+  return (
+    <Popover.Root>
+        <Popover.Trigger asChild>
+            <Button variant="outline"><Sparkles className="mr-2 h-4 w-4" /> View Skills Cloud</Button>
+        </Popover.Trigger>
+        <Popover.Content className="w-96">
+            <div className="p-4">
+                <h4 className="font-semibold mb-2">Top Skills in Workforce</h4>
+                <div className="flex flex-wrap gap-2">
+                {skills.map(skill => (
+                    <button key={skill.text} onClick={() => onSkillSelect(skill.text)} className="text-sm text-primary hover:underline" style={{ fontSize: `${10 + skill.value / 2}px` }}>
+                    {skill.text}
+                    </button>
+                ))}
+                </div>
+            </div>
+        </Popover.Content>
+    </Popover.Root>
+  );
+};
+
 
 interface EmployeeDirectoryProps {
   employees: Employee[];
@@ -36,18 +64,42 @@ interface EmployeeDirectoryProps {
 export function EmployeeDirectory({ employees }: EmployeeDirectoryProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDept, setSelectedDept] = useState("All");
+  const [isSkillsView, setIsSkillsView] = useState(false);
   const todayStr = format(new Date(), "yyyy-MM-dd");
 
   const filteredEmployees = useMemo(() => {
     return employees.filter(employee => {
       const inDept = selectedDept === "All" || employee.department === selectedDept;
-      const matchesSearch =
-        employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        employee.id.includes(searchTerm);
+      
+      const matchesSearch = isSkillsView 
+        ? employee.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
+        : (
+            employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            employee.id.includes(searchTerm)
+          );
+
       return inDept && matchesSearch;
     });
-  }, [employees, searchTerm, selectedDept]);
+  }, [employees, searchTerm, selectedDept, isSkillsView]);
+
+  const skillsWordCloudData = useMemo(() => {
+    const skillCounts = new Map<string, number>();
+    employees.forEach(emp => {
+      emp.skills.forEach(skill => {
+        skillCounts.set(skill, (skillCounts.get(skill) || 0) + 1);
+      });
+    });
+    return Array.from(skillCounts.entries())
+        .map(([text, value]) => ({ text, value }))
+        .sort((a,b) => b.value - a.value)
+        .slice(0, 25); // Top 25 skills
+  }, [employees]);
+
+  const handleSkillSelect = (skill: string) => {
+    setIsSkillsView(true);
+    setSearchTerm(skill);
+  }
 
   return (
     <div className="space-y-6">
@@ -55,6 +107,14 @@ export function EmployeeDirectory({ employees }: EmployeeDirectoryProps) {
             <div>
                 <h1 className="text-3xl font-bold">Employee Directory</h1>
                 <p className="text-muted-foreground">Browse, search, and manage all employee profiles.</p>
+            </div>
+            <div className="flex items-center space-x-2">
+                <Label htmlFor="skills-view" className="text-sm font-medium">Skills View</Label>
+                <Switch 
+                    id="skills-view" 
+                    checked={isSkillsView} 
+                    onCheckedChange={setIsSkillsView}
+                />
             </div>
        </header>
 
@@ -65,38 +125,40 @@ export function EmployeeDirectory({ employees }: EmployeeDirectoryProps) {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search by name, email, or ID..."
+                  placeholder={isSkillsView ? "Search by skill..." : "Search by name, email, or ID..."}
                   className="pl-8"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full sm:w-auto min-w-[200px] justify-between">
-                  {selectedDept === 'All' ? 'All Departments' : selectedDept}
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56">
-                {DEPARTMENTS.map(dept => (
-                  <DropdownMenuItem key={dept} onSelect={() => setSelectedDept(dept)}>
-                    {dept}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+               <div className="flex gap-2">
+                <WordCloud skills={skillsWordCloudData} onSkillSelect={handleSkillSelect} />
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="w-full sm:w-auto min-w-[200px] justify-between">
+                        {selectedDept === 'All' ? 'All Departments' : selectedDept}
+                        <ChevronDown className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56">
+                        {DEPARTMENTS.map(dept => (
+                        <DropdownMenuItem key={dept} onSelect={() => setSelectedDept(dept)}>
+                            {dept}
+                        </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
           </div>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[calc(100vh-20rem)]">
+          <ScrollArea className="h-[calc(100vh-22rem)]">
             <Table>
-              <TableHeader className="sticky top-0 bg-background">
+              <TableHeader className="sticky top-0 bg-background z-10">
                 <TableRow>
                   <TableHead className="w-[280px]">Name</TableHead>
-                  <TableHead>Department</TableHead>
+                  <TableHead>{isSkillsView ? 'Top Skills' : 'Department'}</TableHead>
                   <TableHead>Role</TableHead>
-                  <TableHead>Contact</TableHead>
                   <TableHead>Today's Status</TableHead>
                   <TableHead className="text-right">Profile</TableHead>
                 </TableRow>
@@ -119,9 +181,14 @@ export function EmployeeDirectory({ employees }: EmployeeDirectoryProps) {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{emp.department}</TableCell>
+                      <TableCell>
+                        {isSkillsView ? (
+                            <div className="flex flex-wrap gap-1">
+                                {emp.skills.slice(0,3).map(skill => <Badge key={skill} variant="secondary">{skill}</Badge>)}
+                            </div>
+                        ) : emp.department}
+                      </TableCell>
                       <TableCell className="text-slate-gray">{emp.role}</TableCell>
-                      <TableCell className="text-slate-gray">{emp.email}</TableCell>
                       <TableCell>
                         <Badge
                           variant={

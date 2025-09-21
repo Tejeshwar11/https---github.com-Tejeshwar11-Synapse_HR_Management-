@@ -22,11 +22,33 @@ export type AttendanceRecord = {
   status: AttendanceStatus;
 };
 
+export type Department = 'Engineering' | 'Sales' | 'Marketing' | 'R&D' | 'HR';
+export type Skill = string;
+
+export type Goal = {
+  id: string;
+  title: string;
+  keyResults: {
+    id: string;
+    description: string;
+    progress: number;
+  }[];
+}
+
+export type Kudos = {
+  id: string;
+  from: string;
+  fromAvatar: string;
+  to: string;
+  message: string;
+  timestamp: string; // ISO 8601
+}
+
 export type Employee = {
   id: string;
   name: string;
   role: string;
-  department: string;
+  department: Department;
   avatarUrl: string;
   email: string;
   halfDays?: number;
@@ -39,22 +61,39 @@ export type Employee = {
     collaborationIndex: number;
   };
   requests: LeaveRequest[];
+  attendance: AttendanceRecord[];
+  skills: Skill[];
+  goals: Goal[];
+  kudos: Kudos[];
   flightRisk?: {
       score: number;
       contributingFactors: string[];
   };
-  presence?: {
-      status: 'In Office' | 'Remote' | 'On Leave' | 'Punched In' | 'Punched Out';
-      location?: string;
-  };
-  analytics?: {
-    presenceHeatmapUrl: string;
-  };
-  attendance: AttendanceRecord[];
 };
 
 export type HrAdmin = {
     id: string;
-    name: string;
+    name:string;
     avatarUrl: string;
+}
+
+export type JobOpening = {
+  id: string;
+  title: string;
+  department: Department;
+  location: string;
+}
+
+export type WellnessStat = {
+  month: string;
+  score: number;
+}
+
+export type Workflow = {
+  id: string;
+  type: 'Onboarding' | 'Offboarding';
+  employeeName: string;
+  status: 'Pending' | 'In Progress' | 'Completed';
+  currentStep: string;
+  completion: number;
 }
