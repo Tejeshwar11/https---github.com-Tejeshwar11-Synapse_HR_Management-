@@ -1,13 +1,16 @@
+
 "use client"
 
 import React from "react"
 import type { Employee, JobOpening } from "@/lib/types"
-import { Building, Briefcase, GraduationCap, MapIcon, ChevronRight } from "lucide-react"
+import { Building, Briefcase, GraduationCap, MapIcon, ChevronRight, ExternalLink, Sparkles } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useToast } from "@/hooks/use-toast"
 
 interface GrowthHubProps {
   employee: Employee
@@ -26,6 +29,53 @@ const getCareerPath = (role: string) => {
     }
     return [role, 'Next Level', 'Further Level'];
 }
+
+const JobDetailsDialog = ({ job }: { job: JobOpening }) => {
+    const { toast } = useToast();
+
+    const handleApply = () => {
+        toast({
+            title: "Application Submitted!",
+            description: `You have successfully applied for the ${job.title} position.`,
+        });
+    }
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="outline" size="sm">View Details</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                    <DialogTitle>{job.title}</DialogTitle>
+                    <DialogDescription>
+                        {job.department} • {job.location}
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4 space-y-4">
+                    <div>
+                        <h4 className="font-semibold mb-2">Job Description</h4>
+                        <p className="text-sm text-muted-foreground">
+                            We are looking for a talented and motivated individual to join our {job.department} team. This role will be responsible for driving key initiatives and collaborating with cross-functional teams to achieve our company goals.
+                        </p>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold mb-2">Required Skills</h4>
+                        <div className="flex flex-wrap gap-2">
+                           {['React', 'Node.js', 'Teamwork', 'Communication'].map(skill => (
+                               <Badge key={skill} variant="secondary">{skill}</Badge>
+                           ))}
+                        </div>
+                    </div>
+                </div>
+                <Button onClick={handleApply} className="w-full">
+                    <Sparkles className="mr-2 h-4 w-4" /> Apply Now
+                </Button>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
 
 export function GrowthHub({ employee, openings }: GrowthHubProps) {
   const careerPath = getCareerPath(employee.role);
@@ -127,7 +177,7 @@ export function GrowthHub({ employee, openings }: GrowthHubProps) {
                       <TableCell>{job.department}</TableCell>
                       <TableCell>{job.location}</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="outline" size="sm">View Details</Button>
+                        <JobDetailsDialog job={job} />
                       </TableCell>
                     </TableRow>
                   ))}
