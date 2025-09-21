@@ -13,7 +13,7 @@ export default function LandingPage() {
                 <span className="text-2xl font-bold text-charcoal">Synapse</span>
             </div>
             <Button asChild>
-                <Link href="/login">Request a Demo</Link>
+                <Link href="/demo">Request a Demo</Link>
             </Button>
         </div>
       </header>
@@ -30,7 +30,7 @@ export default function LandingPage() {
                 </p>
                 <div className="mt-10">
                     <Button size="lg" asChild>
-                        <Link href="/login">Request a Demo</Link>
+                        <Link href="/demo">Request a Demo</Link>
                     </Button>
                 </div>
             </div>
