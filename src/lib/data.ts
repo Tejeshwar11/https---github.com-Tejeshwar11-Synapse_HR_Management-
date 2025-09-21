@@ -1,4 +1,5 @@
 
+
 import type { Employee, HrAdmin, LeaveRequest, AttendanceRecord, RequestStatus, Kudos, Goal, JobOpening, WellnessStat, Skill, Workflow, Department, MockUser } from '@/lib/types';
 import { subDays, format, addDays, parseISO, startOfQuarter, endOfQuarter, eachDayOfInterval, subYears, getYear } from 'date-fns';
 import { HOLIDAYS, holidayMap } from './holidays';
@@ -89,10 +90,9 @@ const generateAttendanceHistory = (employeeId: string): AttendanceRecord[] => {
     const history: AttendanceRecord[] = [];
     const today = new Date();
     const seed = parseInt(employeeId, 10);
-    const threeYearsAgo = subYears(today, 3);
-    const startDate = new Date(threeYearsAgo.getFullYear(), 0, 1);
+    const oneYearAgo = subYears(today, 1); // REDUCED from 3 years
     
-    const interval = { start: startDate, end: today };
+    const interval = { start: oneYearAgo, end: today };
     
     eachDayOfInterval(interval).forEach((date, i) => {
         const dateStr = format(date, 'yyyy-MM-dd');
@@ -135,7 +135,7 @@ const generateLeaveRequests = (employeeId: string, attendance: AttendanceRecord[
     const onLeaveDays = attendance.filter(a => a.status === 'on-leave');
     const seed = parseInt(employeeId, 10);
     
-    for (let i = 0; i < onLeaveDays.length && i < 15; i++) { // Generate more requests over 3 years
+    for (let i = 0; i < onLeaveDays.length && i < 5; i++) { // Generate fewer requests
         if (seededRandom(seed + i * 10) > 0.5) {
             const startDate = parseISO(onLeaveDays[i].date);
             const endDate = addDays(startDate, Math.floor(seededRandom(seed + i * 20) * 3));
@@ -171,7 +171,7 @@ const generateLeaveRequests = (employeeId: string, attendance: AttendanceRecord[
 
 let allEmployees: Employee[] = [];
 let currentId = 101;
-const totalEmployees = 1000;
+const totalEmployees = 100; // REDUCED from 1000
 
 for (let i = 0; i < totalEmployees; i++) {
     const id = `${currentId + i}`;
@@ -360,9 +360,9 @@ const flightRiskHotlist = mockEmployees
 
 export const hrDashboardData = {
     workforcePulse: {
-        totalPresent: 854,
-        totalWorkforce: 1000,
-        onLeave: 62,
+        totalPresent: 85,
+        totalWorkforce: 100,
+        onLeave: 6,
         highFlightRisk: mockEmployees.filter(e => e.flightRisk && e.flightRisk.score > 70).length,
         pendingApprovals: 12,
     },
