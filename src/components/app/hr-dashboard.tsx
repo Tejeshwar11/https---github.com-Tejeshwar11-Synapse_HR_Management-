@@ -111,7 +111,7 @@ export function HrDashboard({ data, hrUser }: HrDashboardProps) {
             <Card>
                 <CardHeader>
                     <CardTitle>High Priority: Flight Risk</CardTitle>
-                     <CardDescription>Employees with a flight risk score greater than 70%.</CardDescription>
+                     <CardDescription>Employees flagged for immediate attention.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {data.flightRiskHotlist.map(employee => (
@@ -194,7 +194,7 @@ export function HrDashboard({ data, hrUser }: HrDashboardProps) {
                 <CardContent className="h-[250px]">
                    <ResponsiveContainer width="100%" height="100%">
                     <RechartsBarChart data={data.departmentCollaboration} layout="vertical" margin={{ top: 5, right: 20, left: 60, bottom: 5 }}>
-                        <XAxis type="number" hide />
+                        <XAxis type="number" tick={{ fontSize: 12 }} />
                         <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
                         <Tooltip
                             cursor={{ fill: 'hsl(var(--muted))' }}

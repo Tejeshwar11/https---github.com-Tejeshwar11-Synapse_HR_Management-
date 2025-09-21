@@ -339,23 +339,23 @@ export const mockPriyaSharma = priyaSharma;
 export const mockDavidChen = davidChen;
 export const mockFatimaAlJamil = fatimaAlJamil;
 
-const todayStr = format(new Date(), 'yyyy-MM-dd');
-const presentToday = mockEmployees.filter(e => e.attendance?.find(a => a.date === todayStr)?.status === 'present').length;
-const onLeaveToday = mockEmployees.filter(e => e.attendance?.find(a => a.date === todayStr)?.status === 'on-leave').length;
-const totalPendingRequests = allEmployees.flatMap(emp => emp.requests).filter(r => r.status === 'Pending').length;
+const flightRiskScores = [98, 92, 85, 78, 72];
+const flightRiskHotlist = mockEmployees
+    .filter(e => e.flightRisk && e.flightRisk.score > 70)
+    .sort((a, b) => b.flightRisk!.score - a.flightRisk!.score)
+    .slice(0, 5)
+    .map((e, i) => ({...e, flightRisk: {...e.flightRisk!, score: flightRiskScores[i] || 70 }}));
+
 
 export const hrDashboardData = {
     workforcePulse: {
-        totalPresent: presentToday,
-        totalWorkforce: mockEmployees.length,
-        onLeave: onLeaveToday,
+        totalPresent: 854,
+        totalWorkforce: 1000,
+        onLeave: 62,
         highFlightRisk: mockEmployees.filter(e => e.flightRisk && e.flightRisk.score > 70).length,
-        pendingApprovals: totalPendingRequests,
+        pendingApprovals: 12,
     },
-    flightRiskHotlist: mockEmployees
-        .filter(e => e.flightRisk && e.flightRisk.score > 70)
-        .sort((a, b) => b.flightRisk!.score - a.flightRisk!.score)
-        .slice(0, 4),
+    flightRiskHotlist,
     departmentCollaboration: DEPARTMENTS.map(dept => {
         const deptEmployees = allEmployees.filter(e => e.department === dept);
         const totalIndex = deptEmployees.reduce((acc, e) => acc + e.stats.collaborationIndex, 0);
