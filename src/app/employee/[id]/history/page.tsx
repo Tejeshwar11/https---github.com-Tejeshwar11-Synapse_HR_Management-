@@ -4,8 +4,8 @@ import { notFound } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 
-export default function EmployeeHistoryPage() {
-  const employee = mockEmployees.find((e) => e.id === "282");
+export default function EmployeeHistoryPage({ params }: { params: { id: string } }) {
+  const employee = mockEmployees.find((e) => e.id === params.id);
 
   if (!employee) {
     return notFound();

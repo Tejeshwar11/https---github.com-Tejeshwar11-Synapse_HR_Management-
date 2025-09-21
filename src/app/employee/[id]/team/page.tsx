@@ -2,8 +2,8 @@ import { TeamCalendar } from "@/components/app/team-calendar";
 import { mockEmployees } from "@/lib/data";
 import { notFound } from "next/navigation";
 
-export default function TeamCalendarPage() {
-  const currentUser = mockEmployees.find((e) => e.id === "282");
+export default function TeamCalendarPage({ params }: { params: { id: string } }) {
+  const currentUser = mockEmployees.find((e) => e.id === params.id);
 
   if (!currentUser) {
     return notFound();

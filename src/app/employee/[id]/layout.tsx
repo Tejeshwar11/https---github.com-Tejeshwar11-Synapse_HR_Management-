@@ -4,12 +4,12 @@ import { notFound } from "next/navigation";
 
 export default function EmployeeLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: { id: string };
 }) {
-  // In a real app, you would get the logged-in user's ID from a session or context.
-  // We'll use a default ID for this prototype.
-  const employee = mockEmployees.find((e) => e.id === "282");
+  const employee = mockEmployees.find((e) => e.id === params.id);
 
   if (!employee) {
     return notFound();
