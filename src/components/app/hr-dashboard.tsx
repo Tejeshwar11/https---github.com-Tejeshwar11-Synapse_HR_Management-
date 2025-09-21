@@ -3,12 +3,13 @@
 import { Users, FileWarning, CheckSquare } from "lucide-react";
 import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 
-import type { Employee } from "@/lib/types";
+import type { Employee, HrAdmin } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import Link from "next/link";
 import { Progress } from "../ui/progress";
+import { HrChatbot } from "./hr-chatbot";
 
 interface HrDashboardProps {
   data: {
@@ -26,9 +27,10 @@ interface HrDashboardProps {
         target: number;
     }[];
   };
+  hrUser: HrAdmin;
 }
 
-export function HrDashboard({ data }: HrDashboardProps) {
+export function HrDashboard({ data, hrUser }: HrDashboardProps) {
   return (
     <div className="flex gap-6">
         <div className="flex flex-col flex-1 gap-6">
@@ -133,15 +135,11 @@ export function HrDashboard({ data }: HrDashboardProps) {
             </Card>
           </div>
       </div>
-       <Card className="w-96 rounded-xl shadow-lg flex-col h-fit sticky top-6">
-            <CardHeader>
-                <CardTitle>Synapse Strategic Assistant</CardTitle>
-                 <CardDescription>Get instant insights and actionable plans.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1 flex items-center justify-center text-slate-gray text-sm min-h-[300px]">
-                <p>Chatbot interface coming soon.</p>
-            </CardContent>
-        </Card>
+       <div className="w-96 flex-shrink-0">
+         <div className="sticky top-6 h-[calc(100vh-3rem)]">
+           <HrChatbot hrUser={hrUser} />
+         </div>
+       </div>
     </div>
   );
 }

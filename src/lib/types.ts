@@ -14,6 +14,7 @@ export type LeaveRequest = {
   employeeId?: string;
   employeeName?: string;
   employeeAvatar?: string;
+  department?: Department;
 };
 
 export type AttendanceStatus = 'present' | 'absent' | 'half-day' | 'on-leave' | 'holiday';

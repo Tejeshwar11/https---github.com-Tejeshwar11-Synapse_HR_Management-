@@ -12,6 +12,7 @@ import {
   Frown,
   Meh,
   Award,
+  Sparkles,
 } from "lucide-react";
 import {
   Pie,
@@ -334,10 +335,10 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
       <Sheet>
         <SheetTrigger asChild>
             <Button className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg transition-transform hover:scale-110">
-                <MessageCircle className="h-8 w-8"/>
+                <Sparkles className="h-8 w-8"/>
             </Button>
         </SheetTrigger>
-        <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col">
+        <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col bg-muted/30">
              <EmployeeChatbot employee={employee}/>
         </SheetContent>
       </Sheet>

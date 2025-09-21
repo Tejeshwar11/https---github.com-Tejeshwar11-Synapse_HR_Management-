@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Loader2, Send, User, Bot, Sparkles } from 'lucide-react';
+import { Loader2, Send, Bot, Sparkles, User, FileText, CalendarCheck, CircleHelp, Wallet } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { employeeChatbot } from '@/ai/flows/employee-chatbot';
@@ -20,11 +20,36 @@ interface EmployeeChatbotProps {
     employee: Employee;
 }
 
+const PREDEFINED_PROMPTS = [
+    {
+        icon: Wallet,
+        text: "What is my current leave balance?"
+    },
+    {
+        icon: CalendarCheck,
+        text: "Is my recent request approved?"
+    },
+    {
+        icon: FileText,
+        text: "Draft a regularization request for yesterday."
+    },
+    {
+        icon: CircleHelp,
+        text: "Show me the company's Work-From-Home policy."
+    }
+]
+
 export function EmployeeChatbot({ employee }: EmployeeChatbotProps) {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+     useEffect(() => {
+        setMessages([
+            { role: 'bot', content: `Hi ${employee.name.split(' ')[0]}, I'm your Synapse Assistant. How can I help you today?` }
+        ]);
+    }, [employee.name]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setInput(e.target.value);
@@ -37,7 +62,8 @@ export function EmployeeChatbot({ employee }: EmployeeChatbotProps) {
         setIsLoading(true);
 
         try {
-            const botResponse = await employeeChatbot({ query: query, employee });
+            const history = [...messages, userMessage];
+            const botResponse = await employeeChatbot({ query, employee, history });
             const botMessage: ChatMessage = { role: 'bot', content: botResponse };
             setMessages(prev => [...prev, botMessage]);
         } catch (error) {
@@ -53,12 +79,7 @@ export function EmployeeChatbot({ employee }: EmployeeChatbotProps) {
         if (!input.trim()) return;
         callChatbot(input);
     };
-
-    const handleSelfReview = () => {
-        const query = "Draft My Performance Self-Review";
-        callChatbot(query);
-    }
-
+    
     useEffect(() => {
         if (scrollAreaRef.current) {
             scrollAreaRef.current.scrollTo({
@@ -70,29 +91,31 @@ export function EmployeeChatbot({ employee }: EmployeeChatbotProps) {
 
 
     return (
-        <Card className="w-full h-full flex flex-col border-0 shadow-none rounded-none">
+        <Card className="w-full h-full flex flex-col border-0 shadow-none rounded-none bg-transparent">
             <CardHeader className='border-b'>
-                <CardTitle>AI Assistant</CardTitle>
-                <CardDescription>Ask me questions about your attendance, leave, and more.</CardDescription>
+                <CardTitle className="flex items-center gap-2"><Bot /> Synapse Assistant</CardTitle>
             </CardHeader>
             <CardContent className="flex-grow overflow-hidden p-4">
                 <ScrollArea className="h-full" ref={scrollAreaRef}>
                     <div className="space-y-4 pr-4">
-                         {messages.length === 0 && (
-                            <div className='flex flex-col items-center justify-center h-full text-center text-muted-foreground'>
-                                <Sparkles className='h-10 w-10 mb-2'/>
-                                <p>You can ask things like "What's my leave balance?" or "What's the status of my last request?"</p>
-                            </div>
-                         )}
                         {messages.map((message, index) => (
-                            <div key={index} className={cn("flex items-start gap-3", message.role === 'user' ? 'justify-end' : 'justify-start')}>
+                            <div key={index} className={cn("flex items-start gap-3", message.role === 'user' ? 'justify-end' : '')}>
                                 {message.role === 'bot' && (
-                                    <Avatar className="h-8 w-8">
-                                        <AvatarFallback><Bot /></AvatarFallback>
+                                    <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
+                                        <Bot className='m-1.5'/>
                                     </Avatar>
                                 )}
                                 <div className={cn("rounded-lg p-3 max-w-sm whitespace-pre-wrap", message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
                                     <p className="text-sm">{message.content}</p>
+                                     {index === 0 && messages.length === 1 && (
+                                        <div className="grid grid-cols-2 gap-2 mt-4">
+                                            {PREDEFINED_PROMPTS.map(prompt => (
+                                                <Button key={prompt.text} variant="outline" size="sm" className="h-auto whitespace-normal justify-start text-left" onClick={() => callChatbot(prompt.text)}>
+                                                    <prompt.icon className="h-4 w-4 mr-2 shrink-0"/> {prompt.text}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                                 {message.role === 'user' && (
                                     <Avatar className="h-8 w-8">
@@ -103,9 +126,9 @@ export function EmployeeChatbot({ employee }: EmployeeChatbotProps) {
                             </div>
                         ))}
                          {isLoading && (
-                            <div className="flex items-start gap-3 justify-start">
-                                <Avatar className="h-8 w-8">
-                                    <AvatarFallback><Bot /></AvatarFallback>
+                            <div className="flex items-start gap-3">
+                                <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
+                                    <Bot className='m-1.5'/>
                                 </Avatar>
                                 <div className="rounded-lg p-3 bg-muted flex items-center space-x-2">
                                     <Loader2 className="h-4 w-4 animate-spin"/>
@@ -116,10 +139,7 @@ export function EmployeeChatbot({ employee }: EmployeeChatbotProps) {
                     </div>
                 </ScrollArea>
             </CardContent>
-            <CardFooter className='flex-col items-start gap-2 border-t pt-4'>
-                 <Button variant="outline" size="sm" onClick={handleSelfReview} disabled={isLoading}>
-                    <Sparkles className='mr-2 h-4 w-4'/> Draft My Performance Self-Review
-                </Button>
+            <CardFooter className='border-t pt-4 bg-background'>
                 <form onSubmit={handleSubmit} className="flex w-full items-center space-x-2">
                     <Input
                         id="message"

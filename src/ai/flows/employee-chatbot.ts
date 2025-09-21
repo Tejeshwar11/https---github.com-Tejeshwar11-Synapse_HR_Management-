@@ -1,111 +1,161 @@
 'use server';
 /**
- * @fileOverview A chatbot for answering employee questions.
+ * @fileOverview A multi-persona chatbot for answering employee and HR questions.
  *
- * - employeeChatbot - A function that handles chatbot queries.
- * - EmployeeChatbotInput - The input type for the employeeChatbot function.
- * - EmployeeChatbotOutput - The return type for the employeeChatbot function.
+ * - employeeChatbot - A function that handles chatbot queries for employees.
+ * - hrChatbot - A function that handles chatbot queries for HR.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import type { Employee } from '@/lib/types';
+import { mockEmployees } from '@/lib/data';
+
+// --- Employee Chatbot Schemas ---
 
 const EmployeeChatbotInputSchema = z.object({
   query: z.string().describe("The employee's question."),
   employee: z.custom<Employee>().describe('The full employee data object.'),
+  history: z.array(z.object({
+    role: z.enum(['user', 'bot']),
+    content: z.string(),
+  })).optional().describe('The chat history.'),
 });
 export type EmployeeChatbotInput = z.infer<typeof EmployeeChatbotInputSchema>;
 
 const EmployeeChatbotOutputSchema = z.string().describe("The chatbot's answer to the question.");
 export type EmployeeChatbotOutput = z.infer<typeof EmployeeChatbotOutputSchema>;
 
+// --- HR Chatbot Schemas ---
+
+const HrChatbotInputSchema = z.object({
+  query: z.string().describe("The HR admin's question."),
+  history: z.array(z.object({
+    role: z.enum(['user', 'bot']),
+    content: z.string(),
+  })).optional().describe('The chat history.'),
+});
+export type HrChatbotInput = z.infer<typeof HrChatbotInputSchema>;
+
+const HrChatbotOutputSchema = z.object({
+  response: z.string().describe("The chatbot's answer to the question."),
+  data: z.any().optional().describe("Optional data payload, e.g., for rendering custom components."),
+});
+export type HrChatbotOutput = z.infer<typeof HrChatbotOutputSchema>;
+
+
+// --- Employee Chatbot Implementation ---
 
 export async function employeeChatbot(input: EmployeeChatbotInput): Promise<EmployeeChatbotOutput> {
-  return employeeChatbotFlow(input);
+  const remainingLeave = input.employee.stats.leaveBalance.total - input.employee.stats.leaveBalance.used;
+  const { output } = await employeePrompt({ ...input, remainingLeave });
+  return output!;
 }
 
-const selfReviewPrompt = ai.definePrompt({
-  name: 'selfReviewPrompt',
-  input: { schema: EmployeeChatbotInputSchema },
-  output: { schema: EmployeeChatbotOutputSchema },
-  prompt: `You are a helpful AI assistant for a company called Synapse. You are drafting a performance self-review for an employee.
-  
-  Employee: {{{employee.name}}}
-  Role: {{{employee.role}}}
-  Department: {{{employee.department}}}
-  
-  Their OKRs for the last quarter were:
-  {{#each employee.goals}}
-  - Objective: {{title}}
-    {{#each keyResults}}
-    - Key Result: {{description}} (Progress: {{progress}}%)
-    {{/each}}
-  {{/each}}
-
-  They received the following kudos from colleagues:
-  {{#each employee.kudos}}
-  - "{{message}}" from {{from}}
-  {{/each}}
-  
-  Based on this information, write a professional, positive, and constructive self-review draft. The draft should be in the first person. Start with a brief summary of accomplishments, then elaborate on progress towards each objective, and finally, mention the positive feedback received from peers. Keep it concise, around 3-4 paragraphs.
-  `,
-});
-
-
-const regularChatPrompt = ai.definePrompt({
+const employeePrompt = ai.definePrompt({
   name: 'employeeChatbotPrompt',
-  input: { schema: EmployeeChatbotInputSchema },
+  input: { schema: EmployeeChatbotInputSchema.extend({ remainingLeave: z.number() }) },
   output: { schema: EmployeeChatbotOutputSchema },
-  prompt: `You are a professional, friendly, and helpful HR assistant chatbot for a company called Synapse. Your role is to answer employee questions accurately and concisely.
+  prompt: `You are Synapse Assistant, a friendly, helpful, and task-oriented AI chatbot for employees at Synapse Corp.
 
-You are speaking with an employee. Use the following data to answer their specific questions. Do not refer to the data if the question is general (e.g., "what is the company's vacation policy?").
-
-Employee Details:
+You are speaking with:
 - Name: {{{employee.name}}}
-- ID: {{{employee.id}}}
 - Department: {{{employee.department}}}
-- Email: {{{employee.email}}}
 - Remaining Leave Balance: {{@root.remainingLeave}} days
-- Half-Days Taken this Quarter: {{{employee.halfDays}}}
 
-Recent Leave/Regularization Requests:
+Recent Requests:
 {{#each employee.requests}}
-- Request from {{startDate}} to {{endDate}} for "{{reason}}" is currently {{status}}.
+- Request for "{{reason}}" is currently {{status}}.
 {{/each}}
 
-Recent Attendance (last 5 records):
-{{#each employee.attendance}}
-  {{#if @index < 5}}
-    - On {{date}}, status was {{status}}.
-  {{/if}}
+Keep your answers concise and clear.
+
+If asked about a WFH policy, respond with: "Synapse offers a hybrid model. Employees are expected to be in the office 3 days a week (Tue, Wed, Thu). Please coordinate with your manager for any specific arrangements."
+If asked to draft a regularization request, respond with: "To draft a regularization request, please go to your dashboard and click 'Apply for Leave', then select 'Regularization' and fill in the details. This ensures it is formally logged."
+
+Conversation History:
+{{#each history}}
+- {{role}}: {{content}}
 {{/each}}
 
-Answer the following employee question. If the question is about the employee's personal data and you don't have the answer from the context above, politely state that you do not have access to that specific information. For general questions about HR policies, provide helpful, standard answers as a professional HR assistant would.
+Based on the context and history, answer the user's latest query.
 
-Employee's Question:
+User's Question:
 "{{{query}}}"
 `,
 });
 
 
-const employeeChatbotFlow = ai.defineFlow(
+// --- HR Chatbot Implementation ---
+
+export async function hrChatbot(input: HrChatbotInput): Promise<HrChatbotOutput> {
+  return hrChatbotFlow(input);
+}
+
+const hrChatbotFlow = ai.defineFlow(
   {
-    name: 'employeeChatbotFlow',
-    inputSchema: EmployeeChatbotInputSchema,
-    outputSchema: EmployeeChatbotOutputSchema,
+    name: 'hrChatbotFlow',
+    inputSchema: HrChatbotInputSchema,
+    outputSchema: HrChatbotOutputSchema,
   },
   async (input) => {
-    
-    // Check if the query is for a self-review
-    if (input.query.toLowerCase().includes('self-review')) {
-      const { output } = await selfReviewPrompt(input);
-      return output!;
+    // Check for specific queries to return structured data
+    if (input.query.toLowerCase().includes('flight risk')) {
+      const highRiskEmployees = mockEmployees
+        .filter(e => e.flightRisk && e.flightRisk.score > 70)
+        .sort((a, b) => b.flightRisk!.score - a.flightRisk!.score)
+        .slice(0, 5);
+      
+      return {
+        response: "Here are the top 5 employees with the highest flight risk scores:",
+        data: {
+          type: 'flight-risk-list',
+          employees: highRiskEmployees.map(e => ({
+            id: e.id,
+            name: e.name,
+            role: e.role,
+            flightRisk: e.flightRisk,
+          })),
+        }
+      };
+    }
+
+    if (input.query.toLowerCase().includes('growth plan for employee #102')) {
+       const employee = mockEmployees.find(e => e.id === '102');
+       if (employee) {
+         return {
+            response: `Here is a suggested growth plan for ${employee.name}:`,
+            data: {
+                type: 'growth-plan',
+                employee,
+            }
+         }
+       }
     }
     
-    // For all other queries, use the regular chat prompt
-    const remainingLeave = input.employee.stats.leaveBalance.total - input.employee.stats.leaveBalance.used;
-    const { output } = await regularChatPrompt({ ...input, remainingLeave });
-    return output!;
+    // Fallback to a general LLM call for other queries
+    const { output } = await hrPrompt(input);
+    return { response: output! };
   }
 );
+
+
+const hrPrompt = ai.definePrompt({
+  name: 'hrChatbotPrompt',
+  input: { schema: HrChatbotInputSchema },
+  output: { schema: z.string() },
+  prompt: `You are Synapse Co-Pilot, a professional, analytical, and strategic AI assistant for HR administrators at Synapse Corp.
+
+You have access to a database of 1,000 employees. Your role is to provide data-driven insights.
+
+Conversation History:
+{{#each history}}
+- {{role}}: {{content}}
+{{/each}}
+
+Based on the context and history, answer the user's latest query.
+
+User's Question:
+"{{{query}}}"
+`,
+});
