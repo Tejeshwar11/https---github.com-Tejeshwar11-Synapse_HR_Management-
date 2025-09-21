@@ -17,6 +17,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/
 import { Button } from "../ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Badge } from "../ui/badge";
 
 interface AttendanceCalendarProps {
   attendance: AttendanceRecord[];
@@ -32,11 +33,11 @@ const MONTHS = [
 ];
 
 const statusStyles: Record<string, string> = {
-    present: "bg-green-500",
-    absent: "bg-red-500",
-    'half-day': "bg-yellow-500",
-    'on-leave': "bg-blue-500",
-    holiday: "bg-gray-400",
+    present: "bg-green-100 text-green-800 hover:bg-green-200",
+    absent: "bg-red-100 text-red-800 hover:bg-red-200",
+    'half-day': "bg-yellow-100 text-yellow-800 hover:bg-yellow-200",
+    'on-leave': "bg-blue-100 text-blue-800 hover:bg-blue-200",
+    holiday: "bg-gray-100 text-gray-800 hover:bg-gray-200",
 };
 
 export function AttendanceCalendar({ attendance, initialYear = currentYear, initialMonth = new Date().getMonth() }: AttendanceCalendarProps) {
@@ -59,46 +60,56 @@ export function AttendanceCalendar({ attendance, initialYear = currentYear, init
       setMonth(current => new Date(current.getFullYear(), current.getMonth() + (direction === 'prev' ? -1 : 1), 1));
   }
 
-  const CustomDay = ({ date }: { date: Date }) => {
+  const CustomDay = ({ date, isOutside }: { date: Date, isOutside: boolean }) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const attendanceRecord = attendanceMap.get(dateStr);
     const holidayName = holidayMap.get(dateStr);
     const dayOfWeek = date.getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-    let status = attendanceRecord?.status;
+    let status: string | undefined = attendanceRecord?.status;
     let tooltipContent = null;
-    let dotClass = "";
+    let statusText: string | null = null;
+    let badgeClass = "";
 
     if (holidayName) {
         status = 'holiday';
+        statusText = holidayName.length > 10 ? holidayName.substring(0,9) + '...' : holidayName;
         tooltipContent = `Holiday: ${holidayName}`;
-        dotClass = statusStyles.holiday;
+        badgeClass = statusStyles.holiday;
     } else if (isWeekend) {
         tooltipContent = "Weekend";
     } else if (attendanceRecord) {
+        statusText = status?.replace('-', ' ') || null;
         if (status === 'present' && attendanceRecord.punchIn && attendanceRecord.punchOut) {
             tooltipContent = `Status: Present\nIn: ${attendanceRecord.punchIn}, Out: ${attendanceRecord.punchOut}`;
         } else {
             tooltipContent = `Status: ${status?.replace('-', ' ')}`;
         }
-        dotClass = status ? statusStyles[status] : "";
-    } else if (date < new Date()) {
-        status = 'absent'; // Assume absent if no record for a past weekday
+        badgeClass = status ? statusStyles[status] : "";
+    } else if (date < new Date() && !isOutside) {
+        status = 'absent';
+        statusText = 'Absent';
         tooltipContent = `Status: Absent`;
-        dotClass = statusStyles.absent;
+        badgeClass = statusStyles.absent;
     }
-
+    
     const dayContent = (
-      <div className="relative w-full h-full flex flex-col items-end p-1">
-        <span className="text-xs">{format(date, "d")}</span>
-        {dotClass && <div className={cn("absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full", dotClass)}></div>}
+      <div className="relative w-full h-full flex flex-col items-center justify-center p-1 group hover:bg-gray-50 transition-colors">
+        <span className={cn("absolute top-1 right-1 text-xs", isOutside ? "text-muted-foreground" : "")}>{format(date, "d")}</span>
+        <div className="flex-grow flex items-center justify-center w-full mt-2">
+            {statusText && badgeClass && (
+                <Badge variant="outline" className={cn("w-full justify-center capitalize border-none", badgeClass)}>
+                  {statusText}
+                </Badge>
+            )}
+        </div>
       </div>
     );
     
     if (tooltipContent) {
          return (
-            <TooltipProvider>
+            <TooltipProvider delayDuration={0}>
                 <Tooltip>
                     <TooltipTrigger asChild>{dayContent}</TooltipTrigger>
                     <TooltipContent className="whitespace-pre-line">
@@ -151,11 +162,11 @@ export function AttendanceCalendar({ attendance, initialYear = currentYear, init
       <style>{`
         .rdp-table, .rdp-month, .rdp-vhidden { width: 100%; }
         .rdp-head_cell { font-weight: 500; color: hsl(var(--muted-foreground)); text-transform: uppercase; font-size: 0.75rem; }
-        .rdp-day { border: 1px solid hsl(var(--border)); height: var(--rdp-cell-size); width: var(--rdp-cell-size); }
+        .rdp-day { border: 1px solid hsl(var(--border)); height: var(--rdp-cell-size); width: var(--rdp-cell-size); padding: 0; }
         .rdp-day_outside { color: hsl(var(--muted-foreground)); }
         .rdp-day_today { border: 2px solid hsl(var(--primary)); border-radius: var(--radius); }
-        .rdp-table { border-collapse: collapse; }
-        .rdp { --rdp-cell-size: 60px; }
+        .rdp-table { border-collapse: separate; border-spacing: 0; }
+        .rdp { --rdp-cell-size: 80px; }
         .rdp-caption_label { display: none; }
       `}</style>
       <DayPicker
@@ -163,7 +174,7 @@ export function AttendanceCalendar({ attendance, initialYear = currentYear, init
         onMonthChange={setMonth}
         mode="single"
         components={{
-          DayContent: CustomDay,
+          DayContent: ({ date }) => <CustomDay date={date} isOutside={false} />,
           Caption: Caption,
         }}
         className="w-full"
@@ -180,5 +191,7 @@ export function AttendanceCalendar({ attendance, initialYear = currentYear, init
     </>
   );
 }
+
+    
 
     
