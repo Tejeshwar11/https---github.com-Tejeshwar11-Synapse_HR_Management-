@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation';
 
-export default function EmployeeRedirectPage() {
-  // This page is now redundant. We redirect to a default employee to simulate
-  // a scenario where the user lands on /employee without a specific ID.
-  // In a real app, you might redirect to a user selection screen or the logged-in user's page.
-  redirect('/employee/282');
+// By default, we will show Priya Sharma's dashboard.
+// In a real app, this would be determined by the authenticated user's session.
+export default function EmployeePage() {
+  return null;
 }

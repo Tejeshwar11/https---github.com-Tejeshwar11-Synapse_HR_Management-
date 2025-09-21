@@ -50,7 +50,7 @@ export default function LoginPage() {
         description: `Welcome back! Redirecting you to your dashboard.`,
       });
       if (values.role === 'employee' && user.role === 'Employee') {
-        router.push(`/employee/${user.id}`);
+        router.push(`/employee`);
       } else if (values.role === 'hr' && user.role === 'HR') {
         router.push('/hr');
       } else {

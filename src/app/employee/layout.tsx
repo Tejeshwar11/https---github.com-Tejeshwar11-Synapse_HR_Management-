@@ -1,15 +1,14 @@
 import { EmployeeSidebar } from "@/components/app/employee-sidebar";
 import { mockEmployees } from "@/lib/data";
 import { notFound } from "next/navigation";
+import { EmployeeDashboard } from "@/components/app/employee-dashboard";
 
 export default function EmployeeLayout({
   children,
-  params,
 }: {
   children: React.ReactNode;
-  params: { id: string };
 }) {
-  const employee = mockEmployees.find((e) => e.id === params.id);
+  const employee = mockEmployees.find((e) => e.id === "282");
 
   if (!employee) {
     return notFound();
@@ -20,7 +19,7 @@ export default function EmployeeLayout({
       <EmployeeSidebar employee={employee} />
       <div className="flex flex-col flex-1">
         <main className="flex-1 p-4 sm:px-6 sm:py-6 space-y-6">
-          {children}
+          <EmployeeDashboard employee={employee} />
         </main>
       </div>
     </div>
