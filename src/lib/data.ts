@@ -1,5 +1,5 @@
 
-import type { Employee, HrAdmin, LeaveRequest, AttendanceRecord, RequestStatus, Kudos, Goal, JobOpening, WellnessStat, Skill, Workflow, Department } from '@/lib/types';
+import type { Employee, HrAdmin, LeaveRequest, AttendanceRecord, RequestStatus, Kudos, Goal, JobOpening, WellnessStat, Skill, Workflow, Department, MockUser } from '@/lib/types';
 import { subDays, format, addDays, parseISO, startOfQuarter, endOfQuarter, eachDayOfInterval, subYears, getYear } from 'date-fns';
 import { HOLIDAYS, holidayMap } from './holidays';
 
@@ -12,8 +12,8 @@ export const DEPARTMENTS: Department[] = [
   'HR',
 ];
 
-const FIRST_NAMES = ['Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Reyansh', 'Ayaan', 'Krishna', 'Ishaan', 'Ananya', 'Diya', 'Saanvi', 'Aadhya', 'Pari', 'Riya', 'Myra', 'Aarohi', 'Isha', 'Prisha', 'Liam', 'Olivia', 'Noah', 'Emma', 'Oliver', 'Ava', 'Elijah', 'Charlotte', 'William', 'Sophia', 'James', 'Isabella', 'Benjamin', 'Mia', 'Lucas', 'Amelia', 'Henry', 'Harper', 'Alexander', 'Evelyn', 'Priya', 'David', 'Fatima', 'Chen', 'Al-Jamil', 'Sharma', 'Clark', 'Martin'];
-const LAST_NAMES = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin', 'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez', 'Clark', 'Lewis', 'Robinson', 'Walker', 'Gupta', 'Wang', 'Khan', 'Patel'];
+const FIRST_NAMES = ['Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Reyansh', 'Ayaan', 'Krishna', 'Ishaan', 'Ananya', 'Diya', 'Saanvi', 'Aadhya', 'Pari', 'Riya', 'Myra', 'Aarohi', 'Isha', 'Prisha', 'Liam', 'Olivia', 'Noah', 'Emma', 'Oliver', 'Ava', 'Elijah', 'Charlotte', 'William', 'Sophia', 'James', 'Isabella', 'Benjamin', 'Mia', 'Lucas', 'Amelia', 'Henry', 'Harper', 'Alexander', 'Evelyn', 'Priya', 'David', 'Fatima', 'Chen', 'Al-Jamil', 'Sharma', 'Clark', 'Martin', 'Aamir', 'Khan', 'Wilson'];
+const LAST_NAMES = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin', 'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez', 'Clark', 'Lewis', 'Robinson', 'Walker', 'Gupta', 'Wang', 'Khan', 'Patel', 'Sharma', 'Chen', 'Clark', 'Martin'];
 
 const ROLES_BY_DEPT: Record<Department, { Junior: string[], Associate: string[], Senior: string[], Lead: string[], Manager: string[] }> = {
     'Engineering': { Junior: ['Junior Software Engineer'], Associate: ['Software Engineer'], Senior: ['Senior Software Engineer'], Lead: ['Tech Lead'], Manager: ['Engineering Manager'] },
@@ -285,7 +285,18 @@ export const mockWorkflows: Workflow[] = [
     },
 ];
 
-// --- SPECIFIC MOCK USERS ---
+// --- SPECIFIC MOCK USERS & AUTH ---
+
+export const mockUsers: MockUser[] = [
+    { id: '282', email: 'priya.sharma@synapse.com', password: 'SynapseEng@2025', role: 'Employee' },
+    { id: '102', email: 'david.chen@synapse.com', password: 'ResearchDev!99', role: 'Employee' },
+    { id: 'emp-123', email: 'aamir.khan@synapse.com', password: 'SalesLead#Q4', role: 'Employee' },
+    { id: 'hr-801', email: 'fatima.clark@synapse.com', password: 'HumanRes!Lead01', role: 'HR' },
+    { id: 'hr-802', email: 'isabella.martin@synapse.com', password: 'RecruitWell#25', role: 'HR' },
+    { id: 'hr-803', email: 'james.wilson@synapse.com', password: 'PartnerHR@Syn', role: 'HR' },
+];
+
+
 const priyaSharmaData = allEmployees.find(e => e.department === 'Engineering' && e.role === 'Tech Lead') || allEmployees[0];
 const priyaSharma: Employee = {
     ...priyaSharmaData,
@@ -317,7 +328,7 @@ const davidChen: Employee = {
 
 const fatimaAlJamil: HrAdmin = {
     id: 'hr-801',
-    name: 'Fatima Al-Jamil',
+    name: 'Fatima Clark',
     avatarUrl: `https://picsum.photos/seed/hr-801/150/150`,
 };
 

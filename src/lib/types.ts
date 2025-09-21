@@ -1,5 +1,12 @@
 
 
+export type MockUser = {
+  id: string;
+  email: string;
+  password?: string;
+  role: 'Employee' | 'HR';
+};
+
 export type RequestType = 'leave' | 'regularization';
 
 export type RequestStatus = 'Approved' | 'Pending' | 'Rejected';

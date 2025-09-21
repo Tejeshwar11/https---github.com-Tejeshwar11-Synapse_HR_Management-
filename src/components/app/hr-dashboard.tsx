@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, FileWarning, CheckSquare, Calendar, Sparkles, UserCheck, Building } from "lucide-react";
+import { Users, FileWarning, CheckSquare, Calendar, Sparkles, UserCheck, Building, MessageCircle } from "lucide-react";
 import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 
 import type { Employee, HrAdmin, LeaveRequest } from "@/lib/types";
@@ -235,7 +235,7 @@ export function HrDashboard({ data, hrUser }: HrDashboardProps) {
        <Sheet open={openChat} onOpenChange={setOpenChat}>
         <SheetTrigger asChild>
             <Button className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg transition-transform hover:scale-110 z-50">
-                <Sparkles className="h-8 w-8"/>
+                <MessageCircle className="h-8 w-8"/>
             </Button>
         </SheetTrigger>
         <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col bg-muted/30">

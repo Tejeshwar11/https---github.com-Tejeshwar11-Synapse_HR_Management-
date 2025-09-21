@@ -48,10 +48,11 @@ const LiveClock = () => {
   const [time, setTime] = useState("");
 
   useEffect(() => {
-    setTime(new Date().toLocaleTimeString());
-    const timer = setInterval(() => {
-      setTime(new Date().toLocaleTimeString());
-    }, 1000);
+    const updateClock = () => {
+        setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    };
+    updateClock();
+    const timer = setInterval(updateClock, 1000);
     return () => clearInterval(timer);
   }, []);
   
@@ -155,7 +156,7 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
     setIsPunchedIn(!isPunchedIn);
     toast({
       title: isPunchedIn ? "Punched Out" : "Punched In",
-      description: `Your attendance has been recorded at ${new Date().toLocaleTimeString()}`,
+      description: `Your attendance has been recorded at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
     })
   }
 
@@ -357,7 +358,7 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
       <Sheet>
         <SheetTrigger asChild>
             <Button className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg transition-transform hover:scale-110">
-                <Sparkles className="h-8 w-8"/>
+                <MessageCircle className="h-8 w-8"/>
             </Button>
         </SheetTrigger>
         <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col bg-muted/30">
