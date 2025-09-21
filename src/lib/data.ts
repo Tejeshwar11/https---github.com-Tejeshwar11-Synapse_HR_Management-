@@ -1,6 +1,6 @@
 
 import type { Employee, HrAdmin, LeaveRequest, AttendanceRecord, RequestStatus, Kudos, Goal, JobOpening, WellnessStat, Skill, Workflow, Department } from '@/lib/types';
-import { subDays, format, addDays, parseISO, startOfQuarter, endOfQuarter, eachDayOfInterval, subYears } from 'date-fns';
+import { subDays, format, addDays, parseISO, startOfQuarter, endOfQuarter, eachDayOfInterval, subYears, getYear } from 'date-fns';
 import { HOLIDAYS, holidayMap } from './holidays';
 
 // --- DATA POOLS FOR GENERATION ---
@@ -12,7 +12,7 @@ export const DEPARTMENTS: Department[] = [
   'HR',
 ];
 
-const FIRST_NAMES = ['Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Reyansh', 'Ayaan', 'Krishna', 'Ishaan', 'Ananya', 'Diya', 'Saanvi', 'Aadhya', 'Pari', 'Riya', 'Myra', 'Aarohi', 'Isha', 'Prisha', 'Liam', 'Olivia', 'Noah', 'Emma', 'Oliver', 'Ava', 'Elijah', 'Charlotte', 'William', 'Sophia', 'James', 'Isabella', 'Benjamin', 'Mia', 'Lucas', 'Amelia', 'Henry', 'Harper', 'Alexander', 'Evelyn', 'Priya', 'David', 'Fatima', 'Chen', 'Al-Jamil', 'Sharma'];
+const FIRST_NAMES = ['Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Reyansh', 'Ayaan', 'Krishna', 'Ishaan', 'Ananya', 'Diya', 'Saanvi', 'Aadhya', 'Pari', 'Riya', 'Myra', 'Aarohi', 'Isha', 'Prisha', 'Liam', 'Olivia', 'Noah', 'Emma', 'Oliver', 'Ava', 'Elijah', 'Charlotte', 'William', 'Sophia', 'James', 'Isabella', 'Benjamin', 'Mia', 'Lucas', 'Amelia', 'Henry', 'Harper', 'Alexander', 'Evelyn', 'Priya', 'David', 'Fatima', 'Chen', 'Al-Jamil', 'Sharma', 'Clark', 'Martin'];
 const LAST_NAMES = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin', 'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez', 'Clark', 'Lewis', 'Robinson', 'Walker', 'Gupta', 'Wang', 'Khan', 'Patel'];
 
 const ROLES_BY_DEPT: Record<Department, { Junior: string[], Associate: string[], Senior: string[], Lead: string[], Manager: string[] }> = {
@@ -130,7 +130,7 @@ const generateAttendanceHistory = (employeeId: string): AttendanceRecord[] => {
 };
 
 
-const generateLeaveRequests = (employeeId: string, attendance: AttendanceRecord[]): LeaveRequest[] => {
+const generateLeaveRequests = (employeeId: string, attendance: AttendanceRecord[], name: string, avatar: string, department: Department): LeaveRequest[] => {
     const requests: LeaveRequest[] = [];
     const onLeaveDays = attendance.filter(a => a.status === 'on-leave');
     const seed = parseInt(employeeId, 10);
@@ -142,12 +142,20 @@ const generateLeaveRequests = (employeeId: string, attendance: AttendanceRecord[
             
             const randomStatus = seededRandom(seed + i * 30);
             let status: RequestStatus;
-            if (randomStatus < 0.7) status = 'Approved';
-            else if (randomStatus < 0.9) status = 'Pending';
-            else status = 'Rejected';
+            if (getYear(startDate) < getYear(new Date())) {
+                status = 'Approved';
+            } else {
+                 if (randomStatus < 0.7) status = 'Approved';
+                else if (randomStatus < 0.9) status = 'Pending';
+                else status = 'Rejected';
+            }
             
             requests.push({
                 id: `req-${employeeId}-${i}`,
+                employeeId: employeeId,
+                employeeName: name,
+                employeeAvatar: avatar,
+                department,
                 type: 'leave',
                 startDate: format(startDate, 'yyyy-MM-dd'),
                 endDate: format(endDate, 'yyyy-MM-dd'),
@@ -176,10 +184,13 @@ for (let i = 0; i < totalEmployees; i++) {
 
     const firstName = FIRST_NAMES[Math.floor(seededRandom(seed + 2) * FIRST_NAMES.length)];
     const lastName = LAST_NAMES[Math.floor(seededRandom(seed + 3) * LAST_NAMES.length)];
+    const name = `${firstName} ${lastName}`;
+    const avatar = `https://picsum.photos/seed/${id}/150/150`;
+
     const isHighRisk = seededRandom(seed + 4) < 0.1;
 
     const attendance = generateAttendanceHistory(id);
-    const requests = generateLeaveRequests(id, attendance);
+    const requests = generateLeaveRequests(id, attendance, name, avatar, department);
     const usedLeave = requests.filter(r => r.status === 'Approved').length;
     const halfDays = attendance.filter(a => a.status === 'half-day').length;
     
@@ -199,10 +210,10 @@ for (let i = 0; i < totalEmployees; i++) {
 
     allEmployees.push({
         id,
-        name: `${firstName} ${lastName}`,
+        name: name,
         role,
         department,
-        avatarUrl: `https://picsum.photos/seed/${id}/150/150`,
+        avatarUrl: avatar,
         email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${id}@synapse.corp`,
         halfDays: halfDays,
         stats: {
@@ -238,7 +249,7 @@ export const mockKudos: Kudos[] = Array.from({length: 20}).map((_, i) => {
     // Add to receiver's kudos list
     const receiverEmployee = allEmployees.find(e => e.id === receiver.id);
     if(receiverEmployee) receiverEmployee.kudos.push(kudosItem);
-    return kudosItem;
+    return kudosItem.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 });
 
 // Generate Internal Openings
@@ -325,10 +336,10 @@ export const mockPriyaSharma = priyaSharma;
 export const mockDavidChen = davidChen;
 export const mockFatimaAlJamil = fatimaAlJamil;
 
-const totalPendingRequests = allEmployees.reduce((acc, emp) => acc + emp.requests.filter(r => r.status === 'Pending').length, 0);
 const todayStr = format(new Date(), 'yyyy-MM-dd');
 const presentToday = mockEmployees.filter(e => e.attendance?.find(a => a.date === todayStr)?.status === 'present').length;
 const onLeaveToday = mockEmployees.filter(e => e.attendance?.find(a => a.date === todayStr)?.status === 'on-leave').length;
+const totalPendingRequests = allEmployees.flatMap(emp => emp.requests).filter(r => r.status === 'Pending').length;
 
 export const hrDashboardData = {
     workforcePulse: {
@@ -341,7 +352,7 @@ export const hrDashboardData = {
     flightRiskHotlist: mockEmployees
         .filter(e => e.flightRisk && e.flightRisk.score > 70)
         .sort((a, b) => b.flightRisk!.score - a.flightRisk!.score)
-        .slice(0, 5),
+        .slice(0, 4),
     departmentCollaboration: DEPARTMENTS.map(dept => {
         const deptEmployees = allEmployees.filter(e => e.department === dept);
         const totalIndex = deptEmployees.reduce((acc, e) => acc + e.stats.collaborationIndex, 0);
@@ -350,5 +361,11 @@ export const hrDashboardData = {
             collaborationIndex: parseFloat((totalIndex / (deptEmployees.length || 1)).toFixed(1)),
             target: 8.5
         }
-    })
+    }),
+    pendingRequests: allEmployees.flatMap(e => e.requests).filter(r => r.status === 'Pending').slice(0, 4),
+    upcomingAnniversaries: allEmployees.slice(0,3).map((e, i) => ({
+        name: e.name,
+        date: format(addDays(new Date(), (i+1)*15), 'MMM d'),
+        years: 5 - i
+    }))
 };
