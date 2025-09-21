@@ -1,8 +1,9 @@
+
 import type { Employee, HrAdmin, LeaveRequest, AttendanceRecord, RequestStatus, Kudos, Goal, JobOpening, WellnessStat, Skill, Workflow, Department } from '@/lib/types';
 import { subDays, format, addDays, parseISO, startOfQuarter, endOfQuarter, eachDayOfInterval } from 'date-fns';
 
 // --- DATA POOLS FOR GENERATION ---
-const DEPARTMENTS: Department[] = [
+export const DEPARTMENTS: Department[] = [
   'Engineering',
   'Sales',
   'Marketing',
