@@ -2,8 +2,8 @@ import { GrowthHub } from "@/components/app/growth-hub";
 import { mockEmployees, mockInternalOpenings } from "@/lib/data";
 import { notFound } from "next/navigation";
 
-export default function GrowthHubPage({ params }: { params: { id: string } }) {
-  const employee = mockEmployees.find((e) => e.id === params.id);
+export default function GrowthHubPage() {
+  const employee = mockEmployees.find((e) => e.id === "282");
 
   if (!employee) {
     return notFound();
