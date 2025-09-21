@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import type { Employee, JobOpening } from "@/lib/types"
 import { Building, Briefcase, GraduationCap, MapIcon, ChevronRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
