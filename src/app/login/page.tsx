@@ -32,27 +32,11 @@ export default function LoginPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "priya.sharma@synapse.com",
-      password: "SynapseEng@2025",
+      email: "",
+      password: "",
       role: 'employee',
     },
   });
-
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name === 'role') {
-        if (value.role === 'employee') {
-          form.setValue('email', 'priya.sharma@synapse.com');
-          form.setValue('password', 'SynapseEng@2025');
-        } else {
-          form.setValue('email', 'fatima.clark@synapse.com');
-          form.setValue('password', 'HumanRes!Lead01');
-        }
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
-
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
@@ -66,10 +50,17 @@ export default function LoginPage() {
         title: "Login Successful",
         description: `Welcome back! Redirecting you to your dashboard.`,
       });
-      if (user.role === 'Employee') {
+      if (values.role === 'employee' && user.role === 'Employee') {
         router.push('/employee');
-      } else if (user.role === 'HR') {
+      } else if (values.role === 'hr' && user.role === 'HR') {
         router.push('/hr');
+      } else {
+         toast({
+            variant: "destructive",
+            title: "Role Mismatch",
+            description: "Please select the correct role for your account.",
+         });
+         setIsLoading(false);
       }
     } else {
       toast({
@@ -77,8 +68,8 @@ export default function LoginPage() {
         title: "Login Failed",
         description: "Invalid email or password. Please check your credentials and try again.",
       });
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (
