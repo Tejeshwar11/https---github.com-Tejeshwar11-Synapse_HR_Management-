@@ -35,7 +35,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AppSidebar } from "./app-sidebar";
 import { LeaveRequestDialog } from "./leave-request-dialog";
 import { GiveKudosDialog } from "./give-kudos-dialog";
 import { EmployeeChatbot } from "./employee-chatbot";
@@ -194,144 +193,139 @@ export function EmployeeDashboard({ employee: initialEmployee }: EmployeeDashboa
   ];
 
   return (
-    <div className="flex min-h-screen w-full">
-      <AppSidebar userRole="employee" employee={employee} />
-      <div className="flex flex-col flex-1">
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-          <h1 className="text-2xl">Welcome back, {employee.name.split(" ")[0]}!</h1>
-           <LiveClock />
+    <div className="flex-1 space-y-6">
+       <header>
+          <h1 className="text-3xl font-bold">Welcome back, {employee.name.split(" ")[0]}!</h1>
         </header>
-        <main className="flex-1 p-4 sm:px-6 sm:py-0 space-y-6">
-            <Card className="rounded-xl shadow-md">
-                <CardContent className="p-6 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-success' : 'bg-destructive animate-pulse'}`} />
-                        <div>
-                            <p className="font-semibold text-charcoal">Status: {isPunchedIn ? 'Punched In' : 'Punched Out'}</p>
-                            <p className="text-sm text-slate-gray">{isConnected ? "Connected to Office Wi-Fi" : "Wi-Fi Disconnected"}</p>
-                        </div>
+        <Card className="rounded-xl shadow-md">
+            <CardContent className="p-6 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-success' : 'bg-destructive animate-pulse'}`} />
+                    <div>
+                        <p className="font-semibold text-charcoal">Status: {isPunchedIn ? 'Punched In' : 'Punched Out'}</p>
+                        <p className="text-sm text-slate-gray">{isConnected ? "Connected to Office Wi-Fi" : "Wi-Fi Disconnected"}</p>
                     </div>
-                    <div className="flex gap-2">
-                        <Button onClick={handlePunch} variant={isPunchedIn ? "outline" : "default"} disabled={!isConnected} className="w-32">
-                          {isPunchedIn ? "Punch Out" : "Punch In"}
-                        </Button>
-                        <LeaveRequestDialog onNewRequest={handleNewRequest} />
-                        <GiveKudosDialog />
+                    <LiveClock />
+                </div>
+                <div className="flex gap-2">
+                    <Button onClick={handlePunch} variant={isPunchedIn ? "outline" : "default"} disabled={!isConnected} className="w-32">
+                      {isPunchedIn ? "Punch Out" : "Punch In"}
+                    </Button>
+                    <LeaveRequestDialog onNewRequest={handleNewRequest} />
+                    <GiveKudosDialog />
+                </div>
+            </CardContent>
+        </Card>
+
+        {!isConnected && (
+          <Alert variant="destructive">
+            <WifiOff className="h-4 w-4" />
+            <AlertTitle>You are disconnected from the office Wi-Fi.</AlertTitle>
+            <AlertDescription>Further disconnections may result in a half-day being marked.</AlertDescription>
+          </Alert>
+        )}
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <Card className="rounded-xl shadow-md">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-base font-semibold">Leave Balance</CardTitle>
+                </CardHeader>
+                <CardContent className="flex items-center justify-between">
+                    <div className="text-3xl font-bold text-charcoal">{remainingLeave} <span className="text-lg font-medium">Days</span></div>
+                     <div className="h-20 w-20">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie data={leaveData} dataKey="value" startAngle={90} endAngle={-270} innerRadius="70%" outerRadius="100%" cornerRadius={50} paddingAngle={2}>
+                                </Pie>
+                            </PieChart>
+                        </ResponsiveContainer>
                     </div>
                 </CardContent>
             </Card>
-
-            {!isConnected && (
-              <Alert variant="destructive">
-                <WifiOff className="h-4 w-4" />
-                <AlertTitle>You are disconnected from the office Wi-Fi.</AlertTitle>
-                <AlertDescription>Further disconnections may result in a half-day being marked.</AlertDescription>
-              </Alert>
-            )}
-
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="rounded-xl shadow-md">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-base font-semibold">Leave Balance</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex items-center justify-between">
-                        <div className="text-3xl font-bold text-charcoal">{remainingLeave} <span className="text-lg font-medium">Days</span></div>
-                         <div className="h-20 w-20">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie data={leaveData} dataKey="value" startAngle={90} endAngle={-270} innerRadius="70%" outerRadius="100%" cornerRadius={50} paddingAngle={2}>
-                                    </Pie>
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </CardContent>
-                </Card>
-                 <Card className="rounded-xl shadow-md">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-base font-semibold">Perfect Streak</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex items-center justify-between">
-                        <div className="text-3xl font-bold text-charcoal">{employee.stats.perfectStreak} <span className="text-lg font-medium">Days</span></div>
-                        <Flame className="h-10 w-10 text-orange-400" />
-                    </CardContent>
-                </Card>
-                <Card className="rounded-xl shadow-md">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-base font-semibold">Half-Days This Quarter</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex items-center justify-between">
-                        <div className="text-3xl font-bold text-charcoal">{employee.halfDays || 0}</div>
-                        <TrendingDown className="h-10 w-10 text-destructive" />
-                    </CardContent>
-                </Card>
-                 <Card className="rounded-xl shadow-md">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-base font-semibold">Collaboration Index</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex items-center justify-between">
-                        <div className="text-3xl font-bold text-charcoal">{employee.stats.collaborationIndex}/10</div>
-                         <div className="h-20 w-20">
-                           <ResponsiveContainer width="100%" height="100%">
-                             <RadialBarChart
-                                startAngle={90}
-                                endAngle={-270}
-                                innerRadius="70%"
-                                outerRadius="100%"
-                                barSize={10}
-                                data={collaborationData}
-                             >
-                                <RadialBar background dataKey="value" cornerRadius={50} />
-                             </RadialBarChart>
-                           </ResponsiveContainer>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-            
-             <div className="grid gap-6 lg:grid-cols-3">
-                <Card className="rounded-xl shadow-md lg:col-span-2">
-                    <CardHeader>
-                      <div className="flex justify-between items-center">
-                        <CardTitle>My Recent Requests</CardTitle>
-                         <Button variant="destructive" size="sm" onClick={simulateDisconnect}>Simulate Wi-Fi Disconnect</Button>
-                      </div>
-                        <CardDescription>You have {employee.requests.filter(r => r.status === 'Pending').length} pending requests.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Dates</TableHead>
-                                    <TableHead>Reason</TableHead>
-                                    <TableHead className="text-right">Status</TableHead>
+             <Card className="rounded-xl shadow-md">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-base font-semibold">Perfect Streak</CardTitle>
+                </CardHeader>
+                <CardContent className="flex items-center justify-between">
+                    <div className="text-3xl font-bold text-charcoal">{employee.stats.perfectStreak} <span className="text-lg font-medium">Days</span></div>
+                    <Flame className="h-10 w-10 text-orange-400" />
+                </CardContent>
+            </Card>
+            <Card className="rounded-xl shadow-md">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-base font-semibold">Half-Days This Quarter</CardTitle>
+                </CardHeader>
+                <CardContent className="flex items-center justify-between">
+                    <div className="text-3xl font-bold text-charcoal">{employee.halfDays || 0}</div>
+                    <TrendingDown className="h-10 w-10 text-destructive" />
+                </CardContent>
+            </Card>
+             <Card className="rounded-xl shadow-md">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-base font-semibold">Collaboration Index</CardTitle>
+                </CardHeader>
+                <CardContent className="flex items-center justify-between">
+                    <div className="text-3xl font-bold text-charcoal">{employee.stats.collaborationIndex}/10</div>
+                     <div className="h-20 w-20">
+                       <ResponsiveContainer width="100%" height="100%">
+                         <RadialBarChart
+                            startAngle={90}
+                            endAngle={-270}
+                            innerRadius="70%"
+                            outerRadius="100%"
+                            barSize={10}
+                            data={collaborationData}
+                         >
+                            <RadialBar background dataKey="value" cornerRadius={50} />
+                         </RadialBarChart>
+                       </ResponsiveContainer>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+        
+         <div className="grid gap-6 lg:grid-cols-3">
+            <Card className="rounded-xl shadow-md lg:col-span-2">
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <CardTitle>My Recent Requests</CardTitle>
+                     <Button variant="destructive" size="sm" onClick={simulateDisconnect}>Simulate Wi-Fi Disconnect</Button>
+                  </div>
+                    <CardDescription>You have {employee.requests.filter(r => r.status === 'Pending').length} pending requests.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Type</TableHead>
+                                <TableHead>Dates</TableHead>
+                                <TableHead>Reason</TableHead>
+                                <TableHead className="text-right">Status</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {employee.requests.slice(0, 3).map((req) => (
+                                <TableRow key={req.id}>
+                                    <TableCell className="font-medium capitalize">{req.type}</TableCell>
+                                    <TableCell>{format(parseISO(req.startDate), 'd MMM')} - {format(parseISO(req.endDate), 'd MMM')}</TableCell>
+                                    <TableCell>{req.reason}</TableCell>
+                                    <TableCell className="text-right">
+                                        <Badge variant={
+                                            req.status === 'Approved' ? 'default' 
+                                            : req.status === 'Pending' ? 'secondary'
+                                            : 'destructive'
+                                        } className={req.status === 'Approved' ? 'bg-success' : req.status === 'Pending' ? 'bg-pending text-pending-foreground': ''}>
+                                            {req.status}
+                                        </Badge>
+                                    </TableCell>
                                 </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {employee.requests.slice(0, 3).map((req) => (
-                                    <TableRow key={req.id}>
-                                        <TableCell className="font-medium capitalize">{req.type}</TableCell>
-                                        <TableCell>{format(parseISO(req.startDate), 'd MMM')} - {format(parseISO(req.endDate), 'd MMM')}</TableCell>
-                                        <TableCell>{req.reason}</TableCell>
-                                        <TableCell className="text-right">
-                                            <Badge variant={
-                                                req.status === 'Approved' ? 'default' 
-                                                : req.status === 'Pending' ? 'secondary'
-                                                : 'destructive'
-                                            } className={req.status === 'Approved' ? 'bg-success' : req.status === 'Pending' ? 'bg-pending text-pending-foreground': ''}>
-                                                {req.status}
-                                            </Badge>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-                <WeeklyWellnessPulse />
-            </div>
-        </main>
-      </div>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+            <WeeklyWellnessPulse />
+        </div>
       <Sheet>
         <SheetTrigger asChild>
             <Button className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg transition-transform hover:scale-110">

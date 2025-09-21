@@ -1,4 +1,5 @@
-import { AppHeader } from "@/components/app/header";
+import { EmployeeSidebar } from "@/components/app/employee-sidebar";
+import { mockPriyaSharma } from "@/lib/data";
 
 export default function EmployeeLayout({
   children,
@@ -6,11 +7,13 @@ export default function EmployeeLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <AppHeader userRole="employee" />
-      <div className="container mx-auto px-4 py-8">
-        {children}
+    <div className="flex min-h-screen w-full bg-muted/40">
+      <EmployeeSidebar employee={mockPriyaSharma} />
+      <div className="flex flex-col flex-1">
+        <main className="flex-1 p-4 sm:px-6 sm:py-6 space-y-6">
+          {children}
+        </main>
       </div>
-    </>
+    </div>
   );
 }
